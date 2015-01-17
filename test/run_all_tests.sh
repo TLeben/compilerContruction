@@ -8,6 +8,7 @@ while [[ 1 -eq 1 ]];
 do
 	if [[ -d test${count} ]]; then
 		pushd test${count} > /dev/null
+			echo
 			echo "--------------------"
 			echo "-- TEST ${count} --"
 			echo "--------------------"
@@ -21,12 +22,12 @@ do
 			else
 				echo "TEST ${count} FAILED!"
 			fi
+			echo
 
 			rm -f test${count}.result
 			count=$((${count} + 1))
 		popd > /dev/null
 	else
-		echo "All tests run"
 		break
 	fi
 done
