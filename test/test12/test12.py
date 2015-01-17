@@ -1,3 +1,3 @@
 #!/usr/bin/python
 
-print -12
+print input()

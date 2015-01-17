@@ -9,20 +9,28 @@ do
 	if [[ -d test${count} ]]; then
 		pushd test${count} > /dev/null
 			echo
-			echo "--------------------"
+			echo "-------------"
 			echo "-- TEST ${count} --"
-			echo "--------------------"
+			echo "-------------"
 
-			rm -f test${count}.result
-			./test${count}.py < test${count}.in > test${count}.result
-			diff test${count}.out test${count}.result > /dev/null 2>&1
+			status=0
 
-			if [[ $? -eq 0 ]]; then
+			if [[ ! -f test${count}.py && ! -f test${count}.in && ! -f test${count}.out ]]; then
+				echo "One of the required test files is missing for test ->${count}<-"
+				status=1
+			else
+				rm -f test${count}.result
+				chmod 0755 test${count}.py
+				./test${count}.py < test${count}.in > test${count}.result
+				diff test${count}.out test${count}.result > /dev/null 2>&1
+				status=$?
+			fi
+
+			if [[ ${status} -eq 0 ]]; then
 				echo "TEST ${count} PASSED!"
 			else
-				echo "TEST ${count} FAILED!"
+				echo "!!  TEST ${count} FAILED  !!"
 			fi
-			echo
 
 			rm -f test${count}.result
 			count=$((${count} + 1))

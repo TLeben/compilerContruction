@@ -1,3 +1,3 @@
 #!/usr/bin/python
 
-print -12
+zero = 1 + -1
