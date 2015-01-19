@@ -3,6 +3,7 @@
 import ast
 import compiler
 from compiler.ast import *
+from compiler.consts import OP_ASSIGN
 
 DEBUG = 2
 
@@ -20,7 +21,7 @@ def parse_nodes(n):
 		return parse_nodes(n.nodes[0])
 	elif isinstance(n, Assign):
 		process_assign(n)
-		return parse_nodes(n.nodes[0])
+		return [parse_nodes(x) for x in [n.nodes[0], n.expr]]
 	elif isinstance(n, AssName):
 		process_assname(n)
 		return
@@ -35,8 +36,7 @@ def parse_nodes(n):
 		return
 	elif isinstance(n, Add):
 		process_add(n)
-		return parse_nodes(n.left) 
-		return parse_nodes(n.right)
+		return [parse_nodes(x) for x in [n.left, n.right]]
 	elif isinstance(n, UnarySub):
 		process_unarysub(n)
 		return parse_nodes(n.expr)
@@ -49,15 +49,15 @@ def parse_nodes(n):
 ##----------------------------------------------------------------------------##
 
 def process_module(in_module):
-	if DEBUG >= 1: print "\nGOT ->Module<-"
+	if DEBUG >= 1: print "\nGOT Module"
 
 	module = in_module.node
-	if DEBUG >= 2: print str(module)
+	if DEBUG >= 3: print str(module)
 
 ##----------------------------------------------------------------------------##
 
 def process_stmnt(in_stmnt):
-	if DEBUG >= 1: print "\nGOT ->Statement<-"
+	if DEBUG >= 1: print "\nGOT Statement"
 	if DEBUG >= 2: 
 		for stmnt in in_stmnt.nodes:
 			print str(stmnt)
@@ -65,7 +65,7 @@ def process_stmnt(in_stmnt):
 ##----------------------------------------------------------------------------##
 
 def process_printnl(in_printnl):
-	if DEBUG >= 1: print "\nGOT ->Printnl<-"
+	if DEBUG >= 1: print "\nGOT Printnl"
 
 	# in P0 we only support 1 argument to print
 	if len(in_printnl.nodes) > 1:
@@ -74,83 +74,59 @@ def process_printnl(in_printnl):
 	printnl = in_printnl.nodes[0]
 	if DEBUG >= 2: print str(printnl)
 
-	out_file.write('Print  ->')
-	out_file.write(str(printnl))
-	out_file.write('<-\n')
-
 ##----------------------------------------------------------------------------##
 
 def process_assign(in_assign):
-	if DEBUG >= 1: print "\nGOT ->Assign<-"
-
-	# TODO: Check for OP_ASSIGN flag only for P0
-	if DEBUG >= 2: print str(in_assign.expr)
-
-	out_file.write('Assign  ->')
-	out_file.write(str(in_assign.expr))
-	out_file.write('<-\n')
+	if DEBUG >= 1: print "\nGOT Assign"
+	if DEBUG >= 2: print str(in_assign)
 
 ##----------------------------------------------------------------------------##
 
 def process_assname(in_assname):
-	if DEBUG >= 1: print "\nGOT ->AssName<-"
+	if DEBUG >= 1: print "\nGOT AssName"
+
+	# in P0 we only support OP_ASSIGN
+	if in_assname.flags != OP_ASSIGN:
+		raise Exception('Invalid P0:  AssName has flags not equal to OP_ASSIGN!')
+
 	if DEBUG >= 2: print str(in_assname)
 
 ##----------------------------------------------------------------------------##
 
 def process_discard(in_discard):
-	if DEBUG >= 1: print "\nGOT ->Discard<-"
-	if DEBUG >= 2: print str(in_discard.expr)
+	if DEBUG >= 1: print "\nGOT Discard"
+	if DEBUG >= 2: print str(in_discard)
 
 ##----------------------------------------------------------------------------##
 
 def process_const(in_const):
-	if DEBUG >= 1: print "\nGOT ->Const<-"
+	if DEBUG >= 1: print "\nGOT Const"
 	if DEBUG >= 2: print str(in_const)
 
 ##----------------------------------------------------------------------------##
 
 def process_name(in_name):
-	if DEBUG >= 1: print "\nGOT ->Name<-"
+	if DEBUG >= 1: print "\nGOT Name"
 	if DEBUG >= 2: print str(in_name)
 
 ##----------------------------------------------------------------------------##
 
 def process_add(in_add):
-	if DEBUG >= 1: print "\nGOT ->Add<-"
+	if DEBUG >= 1: print "\nGOT Add"
 	if DEBUG >= 2:
-		print "Left ->"
-		print in_add.left
-		print "<-"
-		print "Right ->"
-		print in_add.right
-		print "<-"
-
-	out_file.write('Add  left ->')
-	out_file.write(n.left)
-	out_file.write('<-  right ->')
-	out_file.write(n.right)
-	out_file.write('<-')
+		print "Left ->", str(in_add.left), "<- Right ->", str(in_add.right), "<-"
 
 ##----------------------------------------------------------------------------##
 
 def process_unarysub(in_unarysub):
-	if DEBUG >= 1: print "\nGOT ->UnarySub<-"
-	if DEBUG >= 2: print str(in_unarysub.expr)
+	if DEBUG >= 1: print "\nGOT UnarySub"
+	if DEBUG >= 2: print str(in_unarysub)
 	
-	out_file.write('UnarySub ->')
-	out_file.write(n.expr)
-	out_file.write('<-\n')
-
 ##----------------------------------------------------------------------------##
 
 def process_callfunc(in_callfunc):
-	if DEBUG >= 1: print "\nGOT ->CallFunc<-"
-	if DEBUG >= 2: print str(in_callfunc.node)
-
-	out_file.write('CallFunc ->')
-	out_file.write(n.node)
-	out_file.write('<-')
+	if DEBUG >= 1: print "\nGOT CallFunc"
+	if DEBUG >= 2: print str(in_callfunc)
 
 ##----------------------------------------------------------------------------##
 
@@ -161,9 +137,7 @@ print file_ast
 print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 print
 
-#print num_nodes(file_ast)
-
-out_file = open('compile.txt','w')
+#out_file = open('compile.txt','w')
 parse_nodes(file_ast)
-out_file.close()
+#out_file.close()
 
