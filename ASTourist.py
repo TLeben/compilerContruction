@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
 import compiler
-import sys
 from compiler import parse, walk
 from compiler.visitor import ASTVisitor
+
+import sys
+
 
 '''
 ASTourist() is a visitor object that handles all ast.Node types.
@@ -12,20 +14,21 @@ All ast.Nodes are included but if an ast.Node type is not implemented it throws 
 Usage is compiler.walk(tree, ASTourist(), walker=ASTVisitor() )
 This class can be imported or run as a standalone program 
 '''
+
+
 class NotImplementedException(Exception): pass
 
-class ASTourist(object): 
-    
-        
+
+class ASTourist(object):
     def generic_visit(self, node):
         print type(node).__name__
-    
+
     def visit(self, node):
         print type(node).__name__
-    
+
     def visitAdd(self, node):
         # Add attributes
-        #     left             left operand
+        # left             left operand
         #     right            right operand
         print 'add',
         walk(node.left, self)
@@ -36,72 +39,72 @@ class ASTourist(object):
 
     def visitAnd(self, node):
         # And attributes
-        #     nodes            list of operands
+        # nodes            list of operands
         raise NotImplementedException('visitAnd')
 
     def visitAssAttr(self, node):
         # AssAttr attributes
-        #     expr             expression on the left-hand side of the dot
+        # expr             expression on the left-hand side of the dot
         #     attrname         the attribute name, a string
         #     flags            XXX
         raise NotImplementedException('visitAssAttr')
 
     def visitAssList(self, node):
         # AssList attributes
-        #     nodes            list of list elements being assigned to
+        # nodes            list of list elements being assigned to
         raise NotImplementedException('visitAssList')
 
     def visitAssName(self, node):
         # AssName attributes
-        #     name             name being assigned to
+        # name             name being assigned to
         #     flags            XXX
-        print node.name,':=\n\t',
+        print node.name, ':=\n\t',
         #raise NotImplementedException('visitAssName')
 
     def visitAssTuple(self, node):
         # AssTuple attributes
-        #     nodes            list of tuple elements being assigned to
+        # nodes            list of tuple elements being assigned to
         raise NotImplementedException('visitAssTuple')
 
     def visitAssert(self, node):
         # Assert attributes
-        #     test             the expression to be tested
+        # test             the expression to be tested
         #     fail             the value of the <tt class="exception">AssertionError</tt>
         raise NotImplementedException('visitAssert')
 
     def visitAssign(self, node):
         # Assign attributes
-        #     nodes            a list of assignment targets, one per equal sign
+        # nodes            a list of assignment targets, one per equal sign
         #     expr             the value being assigned
         walk(node.nodes[0], self)
-        walk(node.expr,self)
+        walk(node.expr, self)
         #raise NotImplementedException('visitAssign')
 
     def visitAugAssign(self, node):
         # AugAssign attributes
-        #     node             
+        # node
         #     op               
         #     expr             
         raise NotImplementedException('visitAugAssign')
 
     def visitBackquote(self, node):
         # Backquote attributes
-        #     expr             
+        # expr
         raise NotImplementedException('visitBackquote')
 
     def visitBitand(self, node):
         # Bitand attributes
-        #     nodes            
+        # nodes
         raise NotImplementedException('visitBitand')
 
     def visitBitor(self, node):
         # Bitor attributes
-        #     nodes            
+        # nodes
         raise NotImplementedException('visitBitor')
 
     def visitBitxor(self, node):
         # Bitxor attributes
-        #     nodes            
+        # nodes
         raise NotImplementedException('visitBitxor')
 
     def visitBreak(self, node):
@@ -111,7 +114,7 @@ class ASTourist(object):
 
     def visitCallFunc(self, node):
         # CallFunc attributes
-        #     node             expression for the callee
+        # node             expression for the callee
         #     args             a list of arguments
         #     star_args        the extended *-arg value
         #     dstar_args       the extended **-arg value
@@ -120,7 +123,7 @@ class ASTourist(object):
 
     def visitClass(self, node):
         # Class attributes
-        #     name             the name of the class, a string
+        # name             the name of the class, a string
         #     bases            a list of base classes
         #     doc              doc string, a string or <code>None</code>
         #     code             the body of the class statement
@@ -128,13 +131,13 @@ class ASTourist(object):
 
     def visitCompare(self, node):
         # Compare attributes
-        #     expr             
+        # expr
         #     ops              
         raise NotImplementedException('visitCompare')
 
     def visitConst(self, node):
         # Const attributes
-        #     value 
+        # value
         print 'const(', node.value, ')'
         #raise NotImplementedException('visitConst')
 
@@ -145,21 +148,21 @@ class ASTourist(object):
 
     def visitDict(self, node):
         # Dict attributes
-        #     items            
+        # items
         raise NotImplementedException('visitDict')
 
     def visitDiscard(self, node):
         # Discard attributes
-        #     expr             
+        # expr
         raise NotImplementedException('visitDiscard')
 
     def visitDiv(self, node):
         # Div attributes
-        #     left             
+        # left
         #     right 
         print 'div:',
         walk(node.left, self)
-        walk(node.right, self)        
+        walk(node.right, self)
         raise NotImplementedException('visitDiv')
 
     def visitEllipsis(self, node):
@@ -169,14 +172,14 @@ class ASTourist(object):
 
     def visitExec(self, node):
         # Exec attributes
-        #     expr             
+        # expr
         #     locals           
         #     globals          
         raise NotImplementedException('visitExec')
 
     def visitFor(self, node):
         # For attributes
-        #     assign           
+        # assign
         #     list             
         #     body             
         #     else_            
@@ -184,13 +187,13 @@ class ASTourist(object):
 
     def visitFrom(self, node):
         # From attributes
-        #     modname          
+        # modname
         #     names            
         raise NotImplementedException('visitFrom')
 
     def visitFunction(self, node):
         # Function attributes
-        #     name             name used in def, a string
+        # name             name used in def, a string
         #     argnames         list of argument names, as strings
         #     defaults         list of default values
         #     flags            xxx
@@ -200,40 +203,40 @@ class ASTourist(object):
 
     def visitGetattr(self, node):
         # Getattr attributes
-        #     expr             
+        # expr
         #     attrname         
         raise NotImplementedException('visitGetattr')
 
     def visitGlobal(self, node):
         # Global attributes
-        #     names            
+        # names
         raise NotImplementedException('visitGlobal')
 
     def visitIf(self, node):
         # If attributes
-        #     tests            
+        # tests
         #     else_            
         raise NotImplementedException('visitIf')
 
     def visitImport(self, node):
         # Import attributes
-        #     names            
+        # names
         raise NotImplementedException('visitImport')
 
     def visitInvert(self, node):
         # Invert attributes
-        #     expr             
+        # expr
         raise NotImplementedException('visitInvert')
 
     def visitKeyword(self, node):
         # Keyword attributes
-        #     name             
+        # name
         #     expr             
         raise NotImplementedException('visitKeyword')
 
     def visitLambda(self, node):
         # Lambda attributes
-        #     argnames         
+        # argnames
         #     defaults         
         #     flags            
         #     code             
@@ -241,69 +244,69 @@ class ASTourist(object):
 
     def visitLeftShift(self, node):
         # LeftShift attributes
-        #     left             
+        # left
         #     right            
         raise NotImplementedException('visitLeftShift')
 
     def visitList(self, node):
         # List attributes
-        #     nodes            
+        # nodes
         raise NotImplementedException('visitList')
 
     def visitListComp(self, node):
         # ListComp attributes
-        #     expr             
+        # expr
         #     quals            
         raise NotImplementedException('visitListComp')
 
     def visitListCompFor(self, node):
         # ListCompFor attributes
-        #     assign           
+        # assign
         #     list             
         #     ifs              
         raise NotImplementedException('visitListCompFor')
 
     def visitListCompIf(self, node):
         # ListCompIf attributes
-        #     test             
+        # test
         raise NotImplementedException('visitListCompIf')
 
     def visitMod(self, node):
         # Mod attributes
-        #     left             
+        # left
         #     right            
         raise NotImplementedException('visitMod')
 
     def visitModule(self, node):
         # Module attributes
-        #     doc              doc string, a string or <code>None</code>
+        # doc              doc string, a string or <code>None</code>
         #     node             body of the module, a <tt class="class">Stmt</tt>
         walk(node.node, self)
         #raise NotImplementedException('visitModule')
 
     def visitMul(self, node):
         # Mul attributes
-        #     left             
+        # left
         #     right 
         print 'mult:',
         walk(node.left, self)
-        walk(node.right, self)        
+        walk(node.right, self)
         #raise NotImplementedException('visitMul')
 
     def visitName(self, node):
         # Name attributes
-        #     name 
+        # name
         print 'id(', node.name, ')'
         #raise NotImplementedException('visitName')
 
     def visitNot(self, node):
         # Not attributes
-        #     expr             
+        # expr
         raise NotImplementedException('visitNot')
 
     def visitOr(self, node):
         # Or attributes
-        #     nodes            
+        # nodes
         raise NotImplementedException('visitOr')
 
     def visitPass(self, node):
@@ -313,46 +316,46 @@ class ASTourist(object):
 
     def visitPower(self, node):
         # Power attributes
-        #     left             
+        # left
         #     right            
         raise NotImplementedException('visitPower')
 
     def visitPrint(self, node):
         # Print attributes
-        #     nodes            
+        # nodes
         #     dest             
         raise NotImplementedException('visitPrint')
 
     def visitPrintnl(self, node):
         # Printnl attributes
-        #     nodes            
+        # nodes
         #     dest
         for n in node.nodes:
             print 'printnl:',
             walk(n, self)
-        #raise NotImplementedException('visitPrintnl')
+            #raise NotImplementedException('visitPrintnl')
 
     def visitRaise(self, node):
         # Raise attributes
-        #     expr1            
+        # expr1
         #     expr2            
         #     expr3            
         raise NotImplementedException('visitRaise')
 
     def visitReturn(self, node):
         # Return attributes
-        #     value            
+        # value
         raise NotImplementedException('visitReturn')
 
     def visitRightShift(self, node):
         # RightShift attributes
-        #     left             
+        # left
         #     right            
         raise NotImplementedException('visitRightShift')
 
     def visitSlice(self, node):
         # Slice attributes
-        #     expr             
+        # expr
         #     flags            
         #     lower            
         #     upper            
@@ -360,58 +363,58 @@ class ASTourist(object):
 
     def visitSliceobj(self, node):
         # Sliceobj attributes
-        #     nodes            list of statements
+        # nodes            list of statements
         raise NotImplementedException('visitSliceobj')
 
     def visitStmt(self, node):
         # Stmt attributes
-        #     nodes
+        # nodes
         for n in node.nodes:
             walk(n, self)
-        #raise NotImplementedException('visitStmt')
+            #raise NotImplementedException('visitStmt')
 
     def visitSub(self, node):
         # Sub attributes
-        #     left             
+        # left
         #     right    
         print 'sub:',
         walk(node.left, self)
-        walk(node.right, self)        
+        walk(node.right, self)
         #raise NotImplementedException('visitSub')
 
     def visitSubscript(self, node):
         # Subscript attributes
-        #     expr             
+        # expr
         #     flags            
         #     subs             
         raise NotImplementedException('visitSubscript')
 
     def visitTryExcept(self, node):
         # TryExcept attributes
-        #     body             
+        # body
         #     handlers         
         #     else_            
         raise NotImplementedException('visitTryExcept')
 
     def visitTryFinally(self, node):
         # TryFinally attributes
-        #     body             
+        # body
         #     final            
         raise NotImplementedException('visitTryFinally')
 
     def visitTuple(self, node):
         # Tuple attributes
-        #     nodes            
+        # nodes
         raise NotImplementedException('visitTuple')
 
     def visitUnaryAdd(self, node):
         # UnaryAdd attributes
-        #     expr             
+        # expr
         raise NotImplementedException('visitUnaryAdd')
 
     def visitUnarySub(self, node):
         # UnarySub attributes
-        #     expr  
+        # expr
         print 'unarySub(',
         walk(node.expr, self)
         print ')',
@@ -419,15 +422,16 @@ class ASTourist(object):
 
     def visitWhile(self, node):
         # While attributes
-        #     test             
+        # test
         #     body             
         #     else_            
         raise NotImplementedException('visitWhile')
 
     def visitYield(self, node):
         # Yield attributes
-        #     value            
+        # value
         raise NotImplementedException('visitYield')
+
 
 if __name__ == "__main__":
     pyfi = 'parse.py'
@@ -435,4 +439,4 @@ if __name__ == "__main__":
         pyfi = sys.argv[1]
     tree = compiler.parseFile(pyfi)
     print tree
-    compiler.walk(tree, ASTourist(), walker=ASTVisitor() )
+    compiler.walk(tree, ASTourist(), walker=ASTVisitor())
