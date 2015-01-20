@@ -7,6 +7,11 @@ from collections import deque
 
 
 class NotImplementedException(Exception):
+
+    '''
+    NotImplementedException is raised to handle AST nodes
+    not yet implemented in the language.
+    '''
     pass
 
 
@@ -159,16 +164,17 @@ class ASTourist(object):
     def visitDiscard(self, node):
         # Discard attributes
         # expr
-        raise NotImplementedException('visitDiscard')
+        self.stk.append(node.expr)
+        # raise NotImplementedException('visitDiscard')
 
     def visitDiv(self, node):
         # Div attributes
         # left
         #     right
+        raise NotImplementedException('visitDiv')
         self.stk.append(node.left)
         self.stk.append(node.right)
         print '/'
-        # raise NotImplementedException('visitDiv')
 
     def visitEllipsis(self, node):
         # Ellipsis attributes
@@ -293,6 +299,7 @@ class ASTourist(object):
         # Mul attributes
         # left
         #     right
+        raise NotImplementedException('visitMul')
         self.stk.append(node.left)
         self.stk.append(node.right)
         print '*'
@@ -301,7 +308,6 @@ class ASTourist(object):
         # Name attributes
         # name
         print node.name
-        # self.stk.appendleft(node.name)
         # raise NotImplementedException('visitName')
 
     def visitNot(self, node):
@@ -378,18 +384,16 @@ class ASTourist(object):
         for n in node.nodes:
             print n
             self.stk.append(n)
-            # walk(n, self)
-            # out = open(self.o, 'a')
         # raise NotImplementedException('visitStmt')
 
     def visitSub(self, node):
         # Sub attributes
         # left
         #     right
+        raise NotImplementedException('visitSub')
         self.stk.append(node.left)
         self.stk.append(node.right)
         print '-'
-        # raise NotImplementedException('visitSub')
 
     def visitSubscript(self, node):
         # Subscript attributes
@@ -419,12 +423,13 @@ class ASTourist(object):
     def visitUnaryAdd(self, node):
         # UnaryAdd attributes
         # expr
+        raise NotImplementedException('visitUnaryAdd')
         self.stk.append(node.expr)
-        # raise NotImplementedException('visitUnaryAdd')
 
     def visitUnarySub(self, node):
         # UnarySub attributes
         # expr
+        print '(-)'
         self.stk.append(node.expr)
         # raise NotImplementedException('visitUnarySub')
 
