@@ -501,7 +501,6 @@ class ASTourist(object):
 
             if t == 'discard':
                 quad.op = t
-                print quad.toString()
                 quad = None
 
             elif t == 'OP_ASSIGN':
