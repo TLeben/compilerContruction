@@ -3,7 +3,9 @@
 '''
 @TODO add function to convert inter-code to x86
 @TODO Modify toInterCode() to write to file instead of print to stdout
-@TODO Clean up
+@TODO Fix toInterCode() - if two temp variables are made in a row
+    output is incorrect. Due to temps being pushed on the stack. 
+    Need to implement as a list/array of Quadruples.
 '''
 
 import compiler
