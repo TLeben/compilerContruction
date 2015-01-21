@@ -5,7 +5,6 @@ from compiler.visitor import walk
 from compiler.visitor import ASTVisitor
 from collections import deque
 
-
 class NotImplementedException(Exception):
 
     '''
@@ -13,6 +12,31 @@ class NotImplementedException(Exception):
     not yet implemented in the language.
     '''
     pass
+
+
+class Quad(object):
+
+    '''Provides mutable data struct implementing three-address
+    instruction using Quadruples.
+    '''
+
+    def __init__(self, result=None, op=None, arg1=None, arg2=None):
+        self.op = op
+        self.arg1 = arg1
+        self.arg2 = arg2
+        self.result = result
+
+    def toString(self):
+        # if self.arg2 is None:
+        if self.op == 'callFunc':
+            return '{0} = {1}()'.format(self.result, self.arg1)
+        elif self.op == 'OP_ASSIGN':
+            return '{0} = {1}'.format(self.result, self.arg1)
+        elif self.op == 'printnl':
+            return '{0} {1}'.format(self.op, self.arg1)
+        elif self.op == '(-)':
+            return '{0} = {1} {2}'.format(self.result, self.op, self.arg1)
+        return "{0} = {1} {2} {3}".format(self.result, self.arg1, self.op, self.arg2)
 
 
 class ASTourist(object):
@@ -26,9 +50,9 @@ class ASTourist(object):
     This class can be imported or run as a standalone program
     '''
 
-    def __init__(self, ofile):
+    def __init__(self):
         self.stk = deque()
-        self.o = ofile
+        self.stk.append('mkr')  # marks end of deque
 
     def genericVisit(self, node):
         print type(node).__name__
@@ -42,6 +66,7 @@ class ASTourist(object):
         #     right            right operand
         self.stk.append(node.left)
         self.stk.append(node.right)
+        self.stk.appendleft('+')
         print '+'
 
     def visitAnd(self, node):
@@ -65,6 +90,8 @@ class ASTourist(object):
         # AssName attributes
         # name             name being assigned to
         #     flags            XXX
+        self.stk.appendleft(node.flags)
+        self.stk.appendleft(node.name)
         print node.flags
         print node.name
 
@@ -127,6 +154,7 @@ class ASTourist(object):
         #     star_args        the extended *-arg value
         #     dstar_args       the extended **-arg value
         print 'callFunc'
+        self.stk.appendleft('callFunc')
         self.stk.append(node.node)
         # raise NotImplementedException('visitCallFunc')
 
@@ -148,6 +176,7 @@ class ASTourist(object):
         # Const attributes
         # value
         # print 'const(', node.value, ')'
+        self.stk.appendleft(node.value)
         print node.value
         # raise NotImplementedException('visitConst')
 
@@ -164,6 +193,8 @@ class ASTourist(object):
     def visitDiscard(self, node):
         # Discard attributes
         # expr
+        print 'discard'
+        self.stk.appendleft('discard')
         self.stk.append(node.expr)
         # raise NotImplementedException('visitDiscard')
 
@@ -308,6 +339,7 @@ class ASTourist(object):
         # Name attributes
         # name
         print node.name
+        self.stk.appendleft(node.name)
         # raise NotImplementedException('visitName')
 
     def visitNot(self, node):
@@ -342,9 +374,9 @@ class ASTourist(object):
         # nodes
         #     dest
         for n in node.nodes:
-            print n
-            # self.stk.appendleft('printnl')
-            # walk(n, self)
+            # print 'printnl'
+            self.stk.appendleft('printnl')
+            self.stk.append(n)
         # raise NotImplementedException('visitPrintnl')
 
     def visitRaise(self, node):
@@ -382,7 +414,7 @@ class ASTourist(object):
         # Stmt attributes
         # nodes
         for n in node.nodes:
-            print n
+            # print n
             self.stk.append(n)
         # raise NotImplementedException('visitStmt')
 
@@ -394,6 +426,7 @@ class ASTourist(object):
         self.stk.append(node.left)
         self.stk.append(node.right)
         print '-'
+        self.stk.appendleft('-')
 
     def visitSubscript(self, node):
         # Subscript attributes
@@ -430,6 +463,7 @@ class ASTourist(object):
         # UnarySub attributes
         # expr
         print '(-)'
+        self.stk.appendleft('(-)')
         self.stk.append(node.expr)
         # raise NotImplementedException('visitUnarySub')
 
@@ -448,17 +482,71 @@ class ASTourist(object):
     def breadth(self):
         while self.stk:
             n = self.stk.pop()
-            walk(n, self)
+            try:
+                # dumps the marker ir error is raised
+                walk(n, self)
+            except AttributeError:
+                break
+
+    def toInterCode(self):
+        print self.stk
+        varCount = 0
+        tmp = 't'
+        quad = Quad()
+        while self.stk:
+            t = self.stk.popleft()
+
+            if quad is None:
+                quad = Quad()
+
+            if t == 'discard':
+                quad.op = t
+                print quad.toString()
+                quad = None
+
+            elif t == 'OP_ASSIGN':
+                quad.op = t
+                quad.result = quad.arg2
+                quad.arg2 = None
+                print quad.toString()
+                quad = None
+
+            elif t == 'printnl':
+                quad.op = t
+                print quad.toString()
+                quad = None
+
+            elif t == 'callFunc' or t == '+' or t == '(-)':
+                quad.op = t
+                quad.result = tmp + str(varCount)
+                self.stk.appendleft(quad.result)
+                varCount += 1
+                print quad.toString()
+                quad = None
+
+            else:
+                if quad.arg1:
+                    quad.arg2 = t
+                else:
+                    quad.arg1 = t
+
 
 if __name__ == "__main__":
     import sys
 
     pyfi = 'p2.py'
-    ofile = 'tst.py'
-    if len(sys.argv) > 1:
-        pyfi = sys.argv[1]
-    tree = compiler.parseFile(pyfi)
-    visitor = ASTourist(ofile)
-
-    compiler.walk(tree, visitor, walker=ASTVisitor())
-    visitor.breadth()
+    if len(sys.argv) != 2:
+        print 'Usage: %s <pythonFile.py>' % (sys.argv[0])
+        raise SystemExit(1)
+    if sys.argv[1][-3:] != '.py':
+        print 'Error: file is not a python file.'
+        raise SystemExit(1)
+    try:
+        tree = compiler.parseFile(sys.argv[1])
+    except IOError as e:
+        print 'Unable to open %s: %s' % (sys.argv[1], e)
+    else:
+        visitor = ASTourist()
+        compiler.walk(tree, visitor, walker=ASTVisitor())
+        visitor.breadth()
+        visitor.toInterCode()
