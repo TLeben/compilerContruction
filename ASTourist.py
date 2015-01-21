@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+'''
+@TODO add function to convert inter-code to x86
+@TODO Modify toInterCode() to write to file instead of print to stdout
+@TODO Clean up
+'''
+
 import compiler
 from compiler.visitor import walk
 from compiler.visitor import ASTVisitor
