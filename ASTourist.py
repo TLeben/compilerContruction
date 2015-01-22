@@ -13,6 +13,7 @@ from compiler.visitor import walk
 from compiler.visitor import ASTVisitor
 from collections import deque
 
+
 class NotImplementedException(Exception):
 
     '''
