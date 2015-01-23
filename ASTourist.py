@@ -12,6 +12,7 @@ import compiler
 from compiler.visitor import walk
 from compiler.visitor import ASTVisitor
 from collections import deque
+from x86AST import *
 
 
 class NotImplementedException(Exception):
@@ -59,9 +60,11 @@ class ASTourist(object):
     This class can be imported or run as a standalone program
     '''
 
-    def __init__(self):
+    def __init__(self, outFile):
+        self.outFile = outFile
         self.stk = deque()
         self.stk.append('mkr')  # marks end of deque
+        self.x86ast = x86AST()
 
     def genericVisit(self, node):
         print type(node).__name__
@@ -498,6 +501,8 @@ class ASTourist(object):
                 break
 
     def toInterCode(self):
+        act = x86Activation("main")
+
         print self.stk
         varCount = 0
         tmp = 't'
@@ -522,6 +527,10 @@ class ASTourist(object):
             elif t == 'printnl':
                 quad.op = t
                 print quad.toString()
+
+                varCount += 1
+                reg = "-" + str(varCount * 4) + "(%ebp)"
+                act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
                 quad = None
 
             elif t == 'callFunc' or t == '+' or t == '(-)':
@@ -537,6 +546,14 @@ class ASTourist(object):
                     quad.arg2 = t
                 else:
                     quad.arg1 = t
+
+        act.setNumVars(varCount)
+        self.x86ast.addRecord(act)
+
+    def renderAssembly(self):
+        fd = open(self.outFile, "w")
+        self.x86ast.prettyPrint(fd)
+        fd.close()
 
 
 if __name__ == "__main__":
@@ -554,7 +571,9 @@ if __name__ == "__main__":
     except IOError as e:
         print 'Unable to open %s: %s' % (sys.argv[1], e)
     else:
-        visitor = ASTourist()
+        visitor = ASTourist(sys.argv[1][:-3] + ".s")
         compiler.walk(tree, visitor, walker=ASTVisitor())
         visitor.breadth()
         visitor.toInterCode()
+        visitor.renderAssembly()
+

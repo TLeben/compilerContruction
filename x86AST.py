@@ -17,29 +17,22 @@ class x86AST(object):
     Contains a list of activation records
     '''
 
-    def __init__(self, outFile=None):
+    def __init__(self):
         self.records = deque()  # holds a list of x86Activation objects
-        self.outFile = outFile  # where to write output
 
     def addRecord(self, record=None):
         self.records.append(record)
 
     '''
-	Iterate over the set of activation records and print the assembly
-	'''
+    Iterate over the set of activation records and print the assembly
+    '''
 
-    def prettyPrint(self):
-        # open the file
-        fd = open(self.outFile, "w")
-
+    def prettyPrint(self, fd):
         # @TODO I'm assuming this won't always be true in the future
         fd.write(".globl main\n")
 
         while self.records:
             self.records.popleft().prettyPrint(fd)
-
-        # close the file
-        fd.close()
 
 ##------------------------------------------------------------------##
 
@@ -52,12 +45,11 @@ class x86Activation(object):
     '''
 
     def __init__(self, name=None):
-        self.name = name					# the name of the function
-        self.preamble = x86Preamble()		# preamble code for this activation
-        self.postamble = x86Postamble()		# postamble code for this activation
-        # the number of variables to reserve stack space for
-        self.numVars = 0
-        self.instructions = deque()			# list of x86 instructions
+        self.name = name                # the name of the function
+        self.preamble = x86Preamble()   # preamble code for this activation
+        self.postamble = x86Postamble() # postamble code for this activation
+        self.numVars = 0                # the number of variables to reserve stack space for
+        self.instructions = deque()     # list of x86 instructions
 
     def addInstruction(self, instr=None):
         self.instructions.append(instr)
@@ -465,26 +457,3 @@ class x86MetaPrintInt(object):
         while self.instructions:
             self.instructions.popleft().prettyPrint(fd)
 
-
-##------------------------------------------------------------------##
-
-if __name__ == "__main__":
-
-    if len(sys.argv) != 2:
-        print 'Usage: %s <assemblyFile.s>' % (sys.argv[0])
-        raise SystemExit(1)
-
-    if sys.argv[1][-2:] != '.s':
-        print 'Error: file is not an assembly file.'
-        raise SystemExit(1)
-
-    ast = x86AST(sys.argv[1])
-    act = x86Activation("main")
-
-    act.setNumVars(2)
-
-    act.addInstruction(x86MetaPrintInt(37, "-4(%ebp)"))
-    act.addInstruction(x86MetaPrintInt(58, "-8(%ebp)"))
-
-    ast.addRecord(act)
-    ast.prettyPrint()
