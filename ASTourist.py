@@ -2,9 +2,8 @@
 
 '''
 @TODO add function to convert inter-code to x86
-@TODO Modify toInterCode() to write to file instead of print to stdout
-@TODO Fix toInterCode() - if two temp variables are made in a row
-    output is incorrect. Due to temps being pushed on the stack. 
+@TODO Modify toInterCode() to write to file instead of print to stdout.
+@TODO integrate x86AST with toInterCode.
     Need to implement as a list/array of Quadruples.
 '''
 
