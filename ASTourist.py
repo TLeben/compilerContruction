@@ -41,10 +41,10 @@ class Quad(object):
             return '{0} = {1}()'.format(self.result, self.arg1)
         elif self.op == 'OP_ASSIGN':
             return '{0} = {1}'.format(self.result, self.arg1)
-        elif self.op == 'printnl':
-            return '{0} {1}'.format(self.op, self.arg1)
+        elif self.op == 'printnl':  # printnl
+            return 'print {}'.format(self.arg1)
         elif self.op == '(-)':
-            return '{0} = {1} {2}'.format(self.result, self.op, self.arg1)
+            return '{0} = - {1}'.format(self.result, self.arg1)
         return "{0} = {1} {2} {3}".format(self.result, self.arg1, self.op, self.arg2)
 
 
@@ -78,7 +78,7 @@ class ASTourist(object):
         self.stk.append(node.left)
         self.stk.append(node.right)
         self.stk.appendleft('+')
-        print '+'
+        # print '+'
 
     def visitAnd(self, node):
         # And attributes
@@ -103,8 +103,8 @@ class ASTourist(object):
         #     flags            XXX
         self.stk.appendleft(node.flags)
         self.stk.appendleft(node.name)
-        print node.flags
-        print node.name
+        # print node.flags
+        # print node.name
 
     def visitAssTuple(self, node):
         # AssTuple attributes
@@ -164,7 +164,7 @@ class ASTourist(object):
         #     args             a list of arguments
         #     star_args        the extended *-arg value
         #     dstar_args       the extended **-arg value
-        print 'callFunc'
+        # print 'callFunc'
         self.stk.appendleft('callFunc')
         self.stk.append(node.node)
         # raise NotImplementedException('visitCallFunc')
@@ -188,7 +188,7 @@ class ASTourist(object):
         # value
         # print 'const(', node.value, ')'
         self.stk.appendleft(node.value)
-        print node.value
+        # print node.value
         # raise NotImplementedException('visitConst')
 
     def visitContinue(self, node):
@@ -204,7 +204,7 @@ class ASTourist(object):
     def visitDiscard(self, node):
         # Discard attributes
         # expr
-        print 'discard'
+        # print 'discard'
         self.stk.appendleft('discard')
         self.stk.append(node.expr)
         # raise NotImplementedException('visitDiscard')
@@ -216,7 +216,7 @@ class ASTourist(object):
         raise NotImplementedException('visitDiv')
         self.stk.append(node.left)
         self.stk.append(node.right)
-        print '/'
+        # print '/'
 
     def visitEllipsis(self, node):
         # Ellipsis attributes
@@ -349,7 +349,7 @@ class ASTourist(object):
     def visitName(self, node):
         # Name attributes
         # name
-        print node.name
+        # print node.name
         self.stk.appendleft(node.name)
         # raise NotImplementedException('visitName')
 
@@ -473,7 +473,7 @@ class ASTourist(object):
     def visitUnarySub(self, node):
         # UnarySub attributes
         # expr
-        print '(-)'
+        # print '(-)'
         self.stk.appendleft('(-)')
         self.stk.append(node.expr)
         # raise NotImplementedException('visitUnarySub')
@@ -500,7 +500,8 @@ class ASTourist(object):
                 break
 
     def toInterCode(self):
-        print self.stk
+        # print self.stk
+        act = x86Activation("main")
         varCount = 0
         tmp = 't'
         quad = Quad()
@@ -513,7 +514,7 @@ class ASTourist(object):
                 quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
-                varCount = 0  # temp vars no longer needed so we reset to t0
+                # varCount = 0  # temp vars no longer needed so we reset to t0
                 quad = None
             elif t == 'OP_ASSIGN':  # assignment operator
                 quad = Quad()
@@ -521,25 +522,29 @@ class ASTourist(object):
                 quad.result = self.stk.pop()
                 quad.arg1 = self.stk.pop()
                 print quad.toString()
-                varCount = 0  # temp vars no longer needed so we reset to t0
+                # varCount = 0  # temp vars no longer needed so we reset to t0
                 quad = None
             elif t == 'printnl':
                 quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
                 print quad.toString()
-                varCount = 0  # temp vars no longer needed so we reset to t0
+                # to x86 instruction
+                reg = "-" + str(varCount * 4) + "(%ebp)"
+                act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
+                # end to x86
+                # varCount = 0  # temp vars no longer needed so we reset to t0
                 quad = None
 
             # ------Function call arg1 = function name arg2 = [,params]--- #
             elif t == 'callFunc':
-                print self.stk
                 quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
                 quad.result = tmp + str(varCount)
                 self.stk.appendleft(quad.result)
                 print quad.toString()
+                act.addInstruction(x86Call(quad.arg1))
                 varCount += 1
                 quad = None
 
@@ -567,8 +572,12 @@ class ASTourist(object):
                 quad = None
             else:
                 self.stk.rotate(-1)
+
+        act.setNumVars(varCount)
+        self.x86ast.addRecord(act)
+
     # def toInterCode(self):
-    #     act = x86Activation("main")
+    #     act = x86Activation("main")###
 
     #     print self.stk
     #     varCount = 0
@@ -596,8 +605,8 @@ class ASTourist(object):
     #             print quad.toString()
 
     #             varCount += 1
-    #             reg = "-" + str(varCount * 4) + "(%ebp)"
-    #             act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
+    #             reg = "-" + str(varCount * 4) + "(%ebp)" ##
+    #             act.addInstruction(x86MetaPrintInt(quad.arg1, reg)) ##
     #             quad = None
 
     #         elif t == 'callFunc' or t == '+' or t == '(-)':
@@ -616,7 +625,6 @@ class ASTourist(object):
 
     #     act.setNumVars(varCount)
     #     self.x86ast.addRecord(act)
-
 
     def renderAssembly(self):
         fd = open(self.outFile, "w")
@@ -644,4 +652,3 @@ if __name__ == "__main__":
         visitor.breadth()
         visitor.toInterCode()
         visitor.renderAssembly()
-
