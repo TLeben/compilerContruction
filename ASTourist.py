@@ -563,6 +563,8 @@ class ASTourist(object):
                 quad.result = tmp + str(varCount)
                 self.stk.appendleft(quad.result)
                 varCount += 1
+                print quad.toString()
+                quad = None
             else:
                 self.stk.rotate(-1)
     # def toInterCode(self):
