@@ -36,8 +36,7 @@ class x86AST(object):
         fd.write(".globl main\n")
 
         while self.records:
-            rec = self.records.popleft()
-            rec.prettyPrint(fd)
+            self.records.popleft().prettyPrint(fd)
 
         # close the file
         fd.close()
@@ -441,6 +440,34 @@ class x86Sub(object):
 
 ##------------------------------------------------------------------##
 
+
+class x86MetaPrintInt(object):
+
+    '''
+    Higher level representation of a call to print_int_nl
+    '''
+
+    def __init__(self, intVal=0, reg=None):
+        # attributes
+        #   intVal      the integer value to print                      example:  42
+        #   reg         the name of the register to store the value     example:  -4(%ebp)
+        self.intVal = intVal
+        self.reg = reg
+        self.instructions = deque()
+
+        # create the list of instructions
+        self.instructions.append(x86Mov("$" + str(intVal), reg))
+        self.instructions.append(x86Push(reg))
+        self.instructions.append(x86Call("print_int_nl"))
+        self.instructions.append(x86Add("$4", "%esp"))
+
+    def prettyPrint(self, fd):
+        while self.instructions:
+            self.instructions.popleft().prettyPrint(fd)
+
+
+##------------------------------------------------------------------##
+
 if __name__ == "__main__":
 
     if len(sys.argv) != 2:
@@ -451,28 +478,13 @@ if __name__ == "__main__":
         print 'Error: file is not an assembly file.'
         raise SystemExit(1)
 
-    # Implements Figure 6 from notes
     ast = x86AST(sys.argv[1])
     act = x86Activation("main")
 
-    act.setNumVars(3)
+    act.setNumVars(2)
 
-    act.addInstruction(x86Call("input"))
-    act.addInstruction(x86Mov("%eax", "-4(%ebp)"))
-
-    act.addInstruction(x86Mov("-4(%ebp)", "%eax"))
-    act.addInstruction(x86Mov("%eax", "-8(%ebp)"))
-    act.addInstruction(x86Neg("-8(%ebp)"))
-
-    act.addInstruction(x86Mov("-8(%ebp)", "%eax"))
-    act.addInstruction(x86Mov("%eax", "-12(%ebp)"))
-    act.addInstruction(x86Add("$2", "-12(%ebp)"))
-
-    act.addInstruction(x86Push("-12(%ebp)"))
-    act.addInstruction(x86Call("print_int_nl"))
-    act.addInstruction(x86Add("$4", "%esp"))
-
-    act.addInstruction(x86Mov("$0", "%eax"))
+    act.addInstruction(x86MetaPrintInt(37, "-4(%ebp)"))
+    act.addInstruction(x86MetaPrintInt(58, "-8(%ebp)"))
 
     ast.addRecord(act)
     ast.prettyPrint()
