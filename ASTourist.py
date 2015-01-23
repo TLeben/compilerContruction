@@ -501,54 +501,121 @@ class ASTourist(object):
                 break
 
     def toInterCode(self):
-        act = x86Activation("main")
-
         print self.stk
         varCount = 0
         tmp = 't'
         quad = Quad()
         while self.stk:
-            t = self.stk.popleft()
-
-            if quad is None:
-                quad = Quad()
-
+            t = self.stk[0]
+            # ----------------Termination statements *reset temp vars----------- #
             if t == 'discard':
-                quad.op = t
+                # no need to instatiate a new quad
+                # bc it is discarded
+                quad = Quad()
+                quad.op = self.stk.popleft()
+                quad.arg1 = self.stk.pop()
+                varCount = 0  # temp vars no longer needed so we reset to t0
                 quad = None
-
-            elif t == 'OP_ASSIGN':
-                quad.op = t
-                quad.result = quad.arg2
-                quad.arg2 = None
+            elif t == 'OP_ASSIGN':  # assignment operator
+                quad = Quad()
+                quad.op = self.stk.popleft()
+                quad.result = self.stk.pop()
+                quad.arg1 = self.stk.pop()
                 print quad.toString()
+                varCount = 0  # temp vars no longer needed so we reset to t0
                 quad = None
-
             elif t == 'printnl':
-                quad.op = t
+                quad = Quad()
+                quad.op = self.stk.popleft()
+                quad.arg1 = self.stk.pop()
                 print quad.toString()
-
-                varCount += 1
-                reg = "-" + str(varCount * 4) + "(%ebp)"
-                act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
+                varCount = 0  # temp vars no longer needed so we reset to t0
                 quad = None
 
-            elif t == 'callFunc' or t == '+' or t == '(-)':
-                quad.op = t
+            # ------Function call arg1 = function name arg2 = [,params]--- #
+            elif t == 'callFunc':
+                print self.stk
+                quad = Quad()
+                quad.op = self.stk.popleft()
+                quad.arg1 = self.stk.pop()
+                quad.result = tmp + str(varCount)
+                self.stk.appendleft(quad.result)
+                print quad.toString()
+                varCount += 1
+                quad = None
+
+            # ------------Binary operations (+, -, *, /)------------------#
+            elif t == '+':
+                quad = Quad()
+                quad.op = self.stk.popleft()
+                quad.arg2 = self.stk.pop()
+                quad.arg1 = self.stk.pop()
                 quad.result = tmp + str(varCount)
                 self.stk.appendleft(quad.result)
                 varCount += 1
                 print quad.toString()
                 quad = None
 
+            # ---------------Unary operations (pos, neg, ....)-------------#
+            elif t == '(-)':
+                quad = Quad()
+                quad.op = self.stk.popleft()
+                quad.arg1 = self.stk.pop()
+                quad.result = tmp + str(varCount)
+                self.stk.appendleft(quad.result)
+                varCount += 1
             else:
-                if quad.arg1:
-                    quad.arg2 = t
-                else:
-                    quad.arg1 = t
+                self.stk.rotate(-1)
+    # def toInterCode(self):
+    #     act = x86Activation("main")
 
-        act.setNumVars(varCount)
-        self.x86ast.addRecord(act)
+    #     print self.stk
+    #     varCount = 0
+    #     tmp = 't'
+    #     quad = Quad()
+    #     while self.stk:
+    #         t = self.stk.popleft()
+
+    #         if quad is None:
+    #             quad = Quad()
+
+    #         if t == 'discard':
+    #             quad.op = t
+    #             quad = None
+
+    #         elif t == 'OP_ASSIGN':
+    #             quad.op = t
+    #             quad.result = quad.arg2
+    #             quad.arg2 = None
+    #             print quad.toString()
+    #             quad = None
+
+    #         elif t == 'printnl':
+    #             quad.op = t
+    #             print quad.toString()
+
+    #             varCount += 1
+    #             reg = "-" + str(varCount * 4) + "(%ebp)"
+    #             act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
+    #             quad = None
+
+    #         elif t == 'callFunc' or t == '+' or t == '(-)':
+    #             quad.op = t
+    #             quad.result = tmp + str(varCount)
+    #             self.stk.appendleft(quad.result)
+    #             varCount += 1
+    #             print quad.toString()
+    #             quad = None
+
+    #         else:
+    #             if quad.arg1:
+    #                 quad.arg2 = t
+    #             else:
+    #                 quad.arg1 = t
+
+    #     act.setNumVars(varCount)
+    #     self.x86ast.addRecord(act)
+
 
     def renderAssembly(self):
         fd = open(self.outFile, "w")
