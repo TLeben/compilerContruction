@@ -47,6 +47,9 @@ class Quad(object):
             return '{0} = - {1}'.format(self.result, self.arg1)
         return "{0} = {1} {2} {3}".format(self.result, self.arg1, self.op, self.arg2)
 
+    def getStackPos(self, varCnt):
+        return '-' + str((varCnt + 1) * 4) + "(%ebp)"
+
 
 class ASTourist(object):
 
@@ -503,6 +506,7 @@ class ASTourist(object):
         # print self.stk
         act = x86Activation("main")
         varCount = 0
+        symTable = dict()
         tmp = 't'
         quad = Quad()
         while self.stk:
@@ -529,8 +533,8 @@ class ASTourist(object):
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
                 print quad.toString()
-                # to x86 instruction
-                reg = "-" + str(varCount * 4) + "(%ebp)"
+                # start to x86 instruction
+                reg = 'not imple'
                 act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
                 # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
@@ -544,7 +548,13 @@ class ASTourist(object):
                 quad.result = tmp + str(varCount)
                 self.stk.appendleft(quad.result)
                 print quad.toString()
+                # start to x86 instruction
+                # call <function name>
                 act.addInstruction(x86Call(quad.arg1))
+                # movl %eax, -X(%ebp)
+                symTable[quad.result] = quad.getStackPos(varCount)
+                act.addInstruction(x86Mov('%eax', symTable[quad.result]))
+                # end to x86
                 varCount += 1
                 quad = None
 
@@ -555,7 +565,11 @@ class ASTourist(object):
                 quad.arg2 = self.stk.pop()
                 quad.arg1 = self.stk.pop()
                 quad.result = tmp + str(varCount)
+                symTable[quad.result] = quad.getStackPos(varCount)
                 self.stk.appendleft(quad.result)
+                # start to x86 instruction
+
+                # end to x86
                 varCount += 1
                 print quad.toString()
                 quad = None
@@ -566,7 +580,22 @@ class ASTourist(object):
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
                 quad.result = tmp + str(varCount)
+                symTable[quad.result] = quad.getStackPos(varCount)
                 self.stk.appendleft(quad.result)
+                # start to x86 instruction
+                # if true we load mem location else we toss a number into eax
+                if quad.arg1 in symTable:
+                    src = symTable[quad.arg1]
+                    act.addInstruction(x86Mov(src, '%eax'))
+                    act.addInstruction(x86Mov('%eax', symTable[quad.result]))
+                else:
+                    src = '$' + str(quad.arg1)
+                    act.addInstruction(x86Mov(src, symTable[quad.result]))
+                # finally we add: negl -X(%ebp)
+                act.addInstruction(x86Neg(symTable[quad.result]))
+
+
+                # end to x86
                 varCount += 1
                 print quad.toString()
                 quad = None
