@@ -526,7 +526,16 @@ class ASTourist(object):
                 quad.result = self.stk.pop()
                 quad.arg1 = self.stk.pop()
                 print quad.toString()
+                symTable[quad.result] = quad.getStackPos(varCount)
+                # start to x86 instruction
+                if quad.arg1 in symTable:
+                    src = symTable[quad.arg1]
+                else:
+                    src = '$' + str(quad.arg1)
+                act.addInstruction(x86Mov(src, symTable[quad.result]))
+                # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
+                varCount += 1
                 quad = None
             elif t == 'printnl':
                 quad = Quad()
@@ -534,7 +543,9 @@ class ASTourist(object):
                 quad.arg1 = self.stk.pop()
                 print quad.toString()
                 # start to x86 instruction
-                reg = 'not imple'
+                # TODO move this to a meta-instruction in x86AST.py
+                if quad.arg1 in symTable:
+                    reg = symTable[quad.arg1]
                 act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
                 # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
@@ -549,6 +560,7 @@ class ASTourist(object):
                 self.stk.appendleft(quad.result)
                 print quad.toString()
                 # start to x86 instruction
+                # TODO move this to a meta-instruction in x86AST.py
                 # call <function name>
                 act.addInstruction(x86Call(quad.arg1))
                 # movl %eax, -X(%ebp)
@@ -568,6 +580,7 @@ class ASTourist(object):
                 symTable[quad.result] = quad.getStackPos(varCount)
                 self.stk.appendleft(quad.result)
                 # start to x86 instruction
+                # TODO move this to a meta-instruction in x86AST.py
                 if quad.arg1 in symTable:
                     src = symTable[quad.arg1]
                     act.addInstruction(x86Mov(src, '%eax'))
@@ -595,7 +608,9 @@ class ASTourist(object):
                 quad.result = tmp + str(varCount)
                 symTable[quad.result] = quad.getStackPos(varCount)
                 self.stk.appendleft(quad.result)
+
                 # start to x86 instruction
+                # TODO move this to a meta-instruction in x86AST.py
                 # if true we load mem location else we toss a number into eax
                 if quad.arg1 in symTable:
                     src = symTable[quad.arg1]
@@ -606,14 +621,15 @@ class ASTourist(object):
                     act.addInstruction(x86Mov(src, symTable[quad.result]))
                 # finally we add: negl -X(%ebp)
                 act.addInstruction(x86Neg(symTable[quad.result]))
-
-
                 # end to x86
                 varCount += 1
                 print quad.toString()
                 quad = None
             else:
                 self.stk.rotate(-1)
+        # Return value is put into %eax
+        # @TODO - return value is hard coded for now
+        act.addInstruction(x86Mov('$0', '%eax'))
 
         act.setNumVars(varCount)
         self.x86ast.addRecord(act)
