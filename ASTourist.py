@@ -568,7 +568,20 @@ class ASTourist(object):
                 symTable[quad.result] = quad.getStackPos(varCount)
                 self.stk.appendleft(quad.result)
                 # start to x86 instruction
-
+                if quad.arg1 in symTable:
+                    src = symTable[quad.arg1]
+                    act.addInstruction(x86Mov(src, '%eax'))
+                    act.addInstruction(x86Mov('%eax', symTable[quad.result]))
+                else:
+                    src = '$' + str(quad.arg1)
+                    act.addInstruction(x86Mov(src, symTable[quad.result]))
+                if quad.arg2 in symTable:
+                    src = symTable[quad.arg2]
+                    act.addInstruction(x86Mov(src, '%eax'))
+                    act.addInstruction(x86Add('%eax', symTable[quad.result]))
+                else:
+                    src = '$' + str(quad.arg2)
+                    act.addInstruction(x86Add(src, symTable[quad.result]))
                 # end to x86
                 varCount += 1
                 print quad.toString()
