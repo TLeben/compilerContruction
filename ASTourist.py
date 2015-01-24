@@ -531,6 +531,7 @@ class ASTourist(object):
                 # start to x86 instruction
                 if quad.arg1 in symTable:
                     src = symTable[quad.arg1]
+                    act.addInstruction(x86Mov(src, '%eax'))
                 else:
                     src = '$' + str(quad.arg1)
                 act.addInstruction(x86Mov(src, symTable[quad.result]))
