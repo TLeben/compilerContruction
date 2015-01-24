@@ -533,17 +533,10 @@ class ASTourist(object):
                     src = symTable[quad.arg1]
                     if self.debug >= 2: print("act.addInstruction(x86Mov({}, {}))".format(src, '%eax'))
                     act.addInstruction(x86Mov(src, '%eax'))
+                    act.addInstruction(x86Mov('%eax', symTable[quad.result]))
                 else:
                     src = '$' + str(quad.arg1)
-
-                #
-                # this is a special case!!  from analysis it looks like this instruction tries to mov two stack variables
-                # the compiler doesn't like that so we will do a temporary move to %eax
-                #
-                if self.debug >= 2: print("@@ act.addInstruction(x86Mov({}, {}))".format(src, '%eax'))
-                act.addInstruction(x86Mov(src, '%eax'))
-                if self.debug >= 2: print("@@ act.addInstruction(x86Mov({}, {}))".format('%eax', symTable[quad.result]))
-                act.addInstruction(x86Mov('%eax', symTable[quad.result]))
+                    act.addInstruction(x86Mov(src, symTable[quad.result]))
                 # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
                 varCount += 1
