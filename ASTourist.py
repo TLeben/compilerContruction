@@ -525,7 +525,7 @@ class ASTourist(object):
                 quad.op = self.stk.popleft()
                 quad.result = self.stk.pop()
                 quad.arg1 = self.stk.pop()
-                print quad.toString()
+                # print quad.toString()
                 symTable[quad.result] = quad.getStackPos(varCount)
                 # start to x86 instruction
                 if quad.arg1 in symTable:
@@ -541,7 +541,7 @@ class ASTourist(object):
                 quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
-                print quad.toString()
+                # print quad.toString()
                 # start to x86 instruction
                 # TODO move this to a meta-instruction in x86AST.py
                 if quad.arg1 in symTable:
@@ -558,7 +558,7 @@ class ASTourist(object):
                 quad.arg1 = self.stk.pop()
                 quad.result = tmp + str(varCount)
                 self.stk.appendleft(quad.result)
-                print quad.toString()
+                # print quad.toString()
                 # start to x86 instruction
                 # TODO move this to a meta-instruction in x86AST.py
                 # call <function name>
@@ -597,7 +597,7 @@ class ASTourist(object):
                     act.addInstruction(x86Add(src, symTable[quad.result]))
                 # end to x86
                 varCount += 1
-                print quad.toString()
+                # print quad.toString()
                 quad = None
 
             # ---------------Unary operations (pos, neg, ....)-------------#
@@ -623,7 +623,7 @@ class ASTourist(object):
                 act.addInstruction(x86Neg(symTable[quad.result]))
                 # end to x86
                 varCount += 1
-                print quad.toString()
+                # print quad.toString()
                 quad = None
             else:
                 self.stk.rotate(-1)
@@ -633,56 +633,6 @@ class ASTourist(object):
 
         act.setNumVars(varCount)
         self.x86ast.addRecord(act)
-
-    # def toInterCode(self):
-    #     act = x86Activation("main")###
-
-    #     print self.stk
-    #     varCount = 0
-    #     tmp = 't'
-    #     quad = Quad()
-    #     while self.stk:
-    #         t = self.stk.popleft()
-
-    #         if quad is None:
-    #             quad = Quad()
-
-    #         if t == 'discard':
-    #             quad.op = t
-    #             quad = None
-
-    #         elif t == 'OP_ASSIGN':
-    #             quad.op = t
-    #             quad.result = quad.arg2
-    #             quad.arg2 = None
-    #             print quad.toString()
-    #             quad = None
-
-    #         elif t == 'printnl':
-    #             quad.op = t
-    #             print quad.toString()
-
-    #             varCount += 1
-    #             reg = "-" + str(varCount * 4) + "(%ebp)" ##
-    #             act.addInstruction(x86MetaPrintInt(quad.arg1, reg)) ##
-    #             quad = None
-
-    #         elif t == 'callFunc' or t == '+' or t == '(-)':
-    #             quad.op = t
-    #             quad.result = tmp + str(varCount)
-    #             self.stk.appendleft(quad.result)
-    #             varCount += 1
-    #             print quad.toString()
-    #             quad = None
-
-    #         else:
-    #             if quad.arg1:
-    #                 quad.arg2 = t
-    #             else:
-    #                 quad.arg1 = t
-
-    #     act.setNumVars(varCount)
-    #     self.x86ast.addRecord(act)
 
     def renderAssembly(self):
         fd = open(self.outFile, "w")
