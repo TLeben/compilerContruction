@@ -448,9 +448,16 @@ class x86MetaPrintInt(object):
         self.instructions = deque()
 
         # create the list of instructions
-        self.instructions.append(x86Mov("$" + str(intVal), reg))
-        self.instructions.append(x86Push(reg))
+        # Push arg we want to print to the stack
+        if reg is None:
+            # push an integer ie pushl $42
+            self.instructions.append(x86Push("$" + str(intVal)))
+        else:
+            # push a mem-location to the stack, ie pushl -12(%ebp)
+            self.instructions.append(x86Push(reg))
+        # call print_int_nl
         self.instructions.append(x86Call("print_int_nl"))
+        # pop the stack 
         self.instructions.append(x86Add("$4", "%esp"))
 
     def prettyPrint(self, fd):
