@@ -4,15 +4,6 @@ set -o nounset
 readonly COMPILER_DIR=${1:-}
 readonly RUNTIME_DIR=${2:-}
 
-echo
-echo
-echo -e "\t\t\t----------------------"
-echo -e "\t\t\t-- Arithmetic Tests --"
-echo -e "\t\t\t----------------------"
-echo
-echo
-
-
 # if a test fails we might end up in a random directory
 top_dir="$(pwd)"
 
@@ -67,6 +58,7 @@ do
 			if [[ ! -f ${output_exe} ]]; then
 				echo "Could not locate executable!  Compilation must have failed!"
 				bad_count=$((${bad_count} + 1))
+cp -f ${output_s} /tmp/
                 rm -f ${output_s}
 				continue
 			fi

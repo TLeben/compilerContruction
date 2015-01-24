@@ -34,7 +34,7 @@ if __name__ == "__main__":
     except IOError as e:
         print 'Unable to open %s: %s' % (inFile, e)
     else:
-        visitor = ASTourist(outFile)
+        visitor = ASTourist(outFile, debug=0)
         compiler.walk(tree, visitor, walker=ASTVisitor())
         visitor.breadth()
         visitor.toInterCode()
