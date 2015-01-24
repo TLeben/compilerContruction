@@ -532,9 +532,10 @@ class ASTourist(object):
                 if quad.arg1 in symTable:
                     src = symTable[quad.arg1]
                     act.addInstruction(x86Mov(src, '%eax'))
+                    act.addInstruction(x86Mov('%eax', symTable[quad.result]))
                 else:
                     src = '$' + str(quad.arg1)
-                act.addInstruction(x86Mov(src, symTable[quad.result]))
+                    act.addInstruction(x86Mov(src, symTable[quad.result]))
                 # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
                 varCount += 1
