@@ -10,7 +10,7 @@ mkdir -p ${tmp_dir}
 for hw_dir in hw1
 do
 	pushd ${hw_dir} > /dev/null
-		for sub_dir in $(ls -d */)
+		for sub_dir in $(ls -d */ | grep -v instructor)
 		do
 			sub_dir=${sub_dir%/}
 			pushd ${sub_dir} > /dev/null
