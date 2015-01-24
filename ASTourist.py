@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 '''
 @TODO add function to convert inter-code to x86
@@ -62,17 +62,18 @@ class ASTourist(object):
     This class can be imported or run as a standalone program
     '''
 
-    def __init__(self, outFile):
+    def __init__(self, outFile, debug=0):
         self.outFile = outFile
+        self.debug = debug
         self.stk = deque()
         self.stk.append('mkr')  # marks end of deque
         self.x86ast = x86AST()
 
     def genericVisit(self, node):
-        print type(node).__name__
+        if self.debug: print type(node).__name__
 
     def visit(self, node):
-        print type(node).__name__
+        if self.debug: print type(node).__name__
 
     def visitAdd(self, node):
         # Add attributes
@@ -347,7 +348,7 @@ class ASTourist(object):
         raise NotImplementedException('visitMul')
         self.stk.append(node.left)
         self.stk.append(node.right)
-        print '*'
+        # print '*'
 
     def visitName(self, node):
         # Name attributes
@@ -439,7 +440,7 @@ class ASTourist(object):
         raise NotImplementedException('visitSub')
         self.stk.append(node.left)
         self.stk.append(node.right)
-        print '-'
+        # print '-'
         self.stk.appendleft('-')
 
     def visitSubscript(self, node):
@@ -525,7 +526,7 @@ class ASTourist(object):
                 quad.op = self.stk.popleft()
                 quad.result = self.stk.pop()
                 quad.arg1 = self.stk.pop()
-                # print quad.toString()
+                if self.debug: print quad.toString()
                 symTable[quad.result] = quad.getStackPos(varCount)
                 # start to x86 instruction
                 if quad.arg1 in symTable:
@@ -541,7 +542,7 @@ class ASTourist(object):
                 quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
-                # print quad.toString()
+                if self.debug: print quad.toString()
                 # start to x86 instruction
                 # TODO move this to a meta-instruction in x86AST.py
                 if quad.arg1 in symTable:
@@ -560,7 +561,7 @@ class ASTourist(object):
                 quad.arg1 = self.stk.pop()
                 quad.result = tmp + str(varCount)
                 self.stk.appendleft(quad.result)
-                # print quad.toString()
+                if self.debug: print quad.toString()
                 # start to x86 instruction
                 # TODO move this to a meta-instruction in x86AST.py
                 # call <function name>
@@ -599,7 +600,7 @@ class ASTourist(object):
                     act.addInstruction(x86Add(src, symTable[quad.result]))
                 # end to x86
                 varCount += 1
-                # print quad.toString()
+                if self.debug: print quad.toString()
                 quad = None
 
             # ---------------Unary operations (pos, neg, ....)-------------#
@@ -625,7 +626,7 @@ class ASTourist(object):
                 act.addInstruction(x86Neg(symTable[quad.result]))
                 # end to x86
                 varCount += 1
-                # print quad.toString()
+                if self.debug: print quad.toString()
                 quad = None
             else:
                 self.stk.rotate(-1)

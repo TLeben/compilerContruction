@@ -1,14 +1,14 @@
 #!/bin/bash
 set -o nounset
 
-echo -e "\n\n---->  BEGIN TESTING AT $(date --utc)  <----\n\n"
+readonly COMPILER_DIR="$(pwd)/.."
+readonly RUNTIME_DIR="$(pwd)/../runtime"
 
 for sub_dir in arithmetic \
                input
 do
 	pushd ${sub_dir} > /dev/null
-		./run_tests.sh
+		./run_tests.sh ${COMPILER_DIR} ${RUNTIME_DIR}
 	popd > /dev/null
 done
 
-echo -e "\n\n---->  END   TESTING AT $(date --utc)  <----\n\n"

@@ -5,7 +5,7 @@ LFLAGS = -lm
 RM = /bin/rm -f
 
 all:
-	$(CC) $(CFLAGS) *.c *.s -o test.exe $(LFLAGS)
+	$(CC) $(CFLAGS) *.c $(INPUT) -o $(OUTPUT) $(LFLAGS)
 
 clean:
 	@$(RM) *.o
