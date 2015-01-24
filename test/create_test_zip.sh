@@ -1,8 +1,8 @@
 #!/bin/bash
 set -o nounset
 
-zip_file="tm-tests.zip"
-tmp_dir="/tmp/hw_zip"
+zip_file="TangoMikes-tests.zip"
+tmp_dir="/tmp/test_zip"
 
 rm -fr ${tmp_dir}
 mkdir -p ${tmp_dir}
@@ -27,5 +27,5 @@ done
 
 
 rm -f ${zip_file}
-zip -qrj ${zip_file} ${tmp_dir}/*.py ${tmp_dir}/*.in
+zip -qrj ${zip_file} ${tmp_dir}/*
 rm -fr ${tmp_dir}
