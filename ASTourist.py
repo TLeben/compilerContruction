@@ -546,6 +546,8 @@ class ASTourist(object):
                 # TODO move this to a meta-instruction in x86AST.py
                 if quad.arg1 in symTable:
                     reg = symTable[quad.arg1]
+                else:
+                    reg = None
                 act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
                 # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
