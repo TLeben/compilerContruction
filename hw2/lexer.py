@@ -13,8 +13,7 @@ import ply.lex as lex
 class Lexer:
     # reserved words go here as key:value pair
     reserved = {
-        'print': 'PRINT',
-        'input()': 'CALL_FUNC'
+        'print': 'PRINT'
     }
     # List of token names
     # This list is also used by yacc for terminals
@@ -24,6 +23,7 @@ class Lexer:
         'INT',
         'PLUS',
         'UNARY_SUB',
+        'CALL_FUNC'
     ] + list(reserved.values())
 
     # Regex rules for simple tokens
