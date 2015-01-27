@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
 # lexer.py
-# tokenizer for p0, processes integers, =, +, - (unary sub)
+
+# @TODO if needed chance callfunc from hard coded 'input()' to regex ~Maybe ?
+# tokenizer for p0, processes ints, =, +, - (unary sub), print
+# & callFunc (input())
 #
 
 import ply.lex as lex
@@ -10,7 +13,8 @@ import ply.lex as lex
 class Lexer:
     # reserved words go here as key:value pair
     reserved = {
-        'print': 'PRINT'
+        'print': 'PRINT',
+        'input()': 'CALL_FUNC'
     }
     # List of token names
     # This list is also used by yacc for terminals
@@ -40,6 +44,11 @@ class Lexer:
             t.value = 0
         return t
 
+    def t_CALL_FUNC(self, t):
+        r'input\(\)'  # r'[a-zA-Z_][a-zA-Z_0-9]*/(/)'
+        t.value = t.value[:-2]
+        return t
+
     def t_ID(self, t):
         r'[a-zA-Z_][a-zA-Z_0-9]*'
         # check for reserved words
@@ -48,7 +57,6 @@ class Lexer:
         return t
 
     # comments are discarded so nothing is returned
-
     def t_COMMENT(self, t):
         r'\#.*'
         pass
@@ -89,6 +97,8 @@ data = '''
 # I am a comment and should not be a token
 val = 3 + -8
 print val
+input = 4 + 9
+input()
 '''
 lx = Lexer()
 lx.build()
