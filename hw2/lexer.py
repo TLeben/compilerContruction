@@ -34,6 +34,13 @@ class Lexer:
     # t_PRINT = r'print'
     t_UNARY_SUB = r'-'
 
+    def __init__(self):
+        self.build()
+
+        # Build lexer
+    def build(self, **kwargs):
+        self.lexer = lex.lex(module=self, **kwargs)
+        
     # Regrex rule with action code
     def t_INT(self, t):
         r'\d'
@@ -73,9 +80,6 @@ class Lexer:
         print "Illegal character '%s'" % t.value[0]
         t.lexer.skip(1)
 
-    # Build lexer
-    def build(self, **kwargs):
-        self.lexer = lex.lex(module=self, **kwargs)
 
     # Tokenize test with output
         # lexer.token() returns next instances of LexToken
@@ -101,5 +105,5 @@ input = 4 + 9
 input()
 '''
 lx = Lexer()
-lx.build()
+#lx.build()
 lx.test(data)
