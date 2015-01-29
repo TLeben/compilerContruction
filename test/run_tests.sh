@@ -71,7 +71,7 @@ do
 			echo "TEST ${test_name} PASSED!"
 			good_count=$((${good_count} + 1))
 		else
-			echo "!!  TEST ${count} FAILED  !!"
+			echo "!!  TEST ${test_name} FAILED  !!"
 			bad_count=$((${bad_count} + 1))
 		fi
 

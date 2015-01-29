@@ -4,8 +4,7 @@ set -o nounset
 readonly COMPILER_DIR="${1:-}"
 readonly RUNTIME_DIR="${2:-}"
 
-#for sub_dir in $(ls -d */)
-for sub_dir in arithmetic
+for sub_dir in $(ls -d */)
 do
 	sub_dir=${sub_dir%/}
 
