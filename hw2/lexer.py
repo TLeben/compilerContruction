@@ -22,6 +22,8 @@ class Lexer:
         'ID',
         'INT',
         'PLUS',
+        'LPAREN',
+        'RPAREN',
         'UNARY_SUB',
         'CALL_FUNC'
     ] + list(reserved.values())
@@ -32,6 +34,8 @@ class Lexer:
     # avoid rules for reserved words bc this will pick up 'printed'
     # good test case
     # t_PRINT = r'print'
+    t_LPAREN = r'\('
+    t_RPAREN = r'\)'
     t_UNARY_SUB = r'-'
 
     def __init__(self):
@@ -102,6 +106,8 @@ data = '''
 val = 3 + -8
 print val
 input = 4 + 9
+val1 = (1 + 1)
+val2 = ((2 + -3) + ((4 + 2)))
 input()
 '''
 lx = Lexer()
