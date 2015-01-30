@@ -1,3 +1,4 @@
 #!/usr/bin/env python
 
-res = 1
+x = 1
+y = 2

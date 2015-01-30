@@ -39,7 +39,7 @@ class Lexer:
     t_UNARY_SUB = r'-'
 
     def __init__(self, **kwargs):
-        self.lexer = lex.lex(module=self, **kwargs)
+        self.lexer = lex.lex(module=self, debug=False, **kwargs)
         
     # Regrex rule with action code
     def t_INT(self, t):
