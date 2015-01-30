@@ -38,16 +38,12 @@ class Lexer:
     t_RPAREN = r'\)'
     t_UNARY_SUB = r'-'
 
-    def __init__(self):
-        self.build()
-
-        # Build lexer
-    def build(self, **kwargs):
+    def __init__(self, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
         
     # Regrex rule with action code
     def t_INT(self, t):
-        r'\d'
+        r'\d+'
         try:
             t.value = int(t.value)
         except ValueError:
@@ -98,18 +94,26 @@ class Lexer:
             print tok
             # print tok.type, tok.value, tok.lineno, tok.lexpos
 
+    def input(self, data):
+        self.lexer.input(data)
+#        for tok in self.lexer:  # Give data to lexer with input()
+#            print tok
+
+    def token(self):
+        return self.lexer.token()
 #------------------------------------------------------------
 # testing out the lexer
 
-data = '''
-# I am a comment and should not be a token
-val = 3 + -8
-print val
-input = 4 + 9
-val1 = (1 + 1)
-val2 = ((2 + -3) + ((4 + 2)))
-input()
-'''
-lx = Lexer()
+#data = '''
+## I am a comment and should not be a token
+#val = 3 + -8
+#print val
+#input = 4 + 9
+#val1 = (1 + 1)
+#val2 = ((2 + -3) + ((4 + 2)))
+#input()
+#'''
+#lx = Lexer()
 #lx.build()
-lx.test(data)
+#lx.test(data)
+
