@@ -504,25 +504,23 @@ class ASTourist(object):
                 break
 
     def toInterCode(self):
-        # print self.stk
+        if self.debug >= 1: print self.stk
         act = x86Activation("main")
         varCount = 0
         symTable = dict()
-        tmp = 't'
-        quad = Quad()
+        tmp = '____________t'
         while self.stk:
             t = self.stk[0]
+            quad = Quad()
             # ----------------Termination statements *reset temp vars----------- #
             if t == 'discard':
                 # no need to instatiate a new quad
                 # bc it is discarded
-                quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
+                if self.debug >= 1: print quad.toString()
                 # varCount = 0  # temp vars no longer needed so we reset to t0
-                quad = None
             elif t == 'OP_ASSIGN':  # assignment operator
-                quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.result = self.stk.pop()
                 quad.arg1 = self.stk.pop()
@@ -540,9 +538,7 @@ class ASTourist(object):
                 # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
                 varCount += 1
-                quad = None
             elif t == 'printnl':
-                quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
                 if self.debug >= 1: print quad.toString()
@@ -556,11 +552,9 @@ class ASTourist(object):
                 act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
                 # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
-                quad = None
 
             # ------Function call arg1 = function name arg2 = [,params]--- #
             elif t == 'callFunc':
-                quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
                 quad.result = tmp + str(varCount)
@@ -577,15 +571,14 @@ class ASTourist(object):
                 act.addInstruction(x86Mov('%eax', symTable[quad.result]))
                 # end to x86
                 varCount += 1
-                quad = None
 
             # ------------Binary operations (+, -, *, /)------------------#
             elif t == '+':
-                quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg2 = self.stk.pop()
                 quad.arg1 = self.stk.pop()
                 quad.result = tmp + str(varCount)
+                if self.debug >= 1: print quad.toString()
                 symTable[quad.result] = quad.getStackPos(varCount)
                 self.stk.appendleft(quad.result)
                 # start to x86 instruction
@@ -612,15 +605,13 @@ class ASTourist(object):
                     act.addInstruction(x86Add(src, symTable[quad.result]))
                 # end to x86
                 varCount += 1
-                if self.debug >= 1: print quad.toString()
-                quad = None
 
             # ---------------Unary operations (pos, neg, ....)-------------#
             elif t == '(-)':
-                quad = Quad()
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
                 quad.result = tmp + str(varCount)
+                if self.debug >= 1: print quad.toString()
                 symTable[quad.result] = quad.getStackPos(varCount)
                 self.stk.appendleft(quad.result)
 
@@ -642,8 +633,6 @@ class ASTourist(object):
                 act.addInstruction(x86Neg(symTable[quad.result]))
                 # end to x86
                 varCount += 1
-                if self.debug >= 1: print quad.toString()
-                quad = None
             else:
                 self.stk.rotate(-1)
         # Return value is put into %eax

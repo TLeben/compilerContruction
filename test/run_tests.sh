@@ -59,7 +59,7 @@ do
 		if [[ ! -f ${output_exe} ]]; then
 			echo "Could not locate executable!  Compilation must have failed!"
 			bad_count=$((${bad_count} + 1))
-               rm -f ${output_s}
+            rm -f ${output_s}
 			continue
 		fi
 
@@ -73,6 +73,17 @@ do
 		else
 			echo "!!  TEST ${test_name} FAILED  !!"
 			bad_count=$((${bad_count} + 1))
+
+			# save off the results for post-mortem analysis
+			save_dir="/tmp/${test_name}"
+			rm -fr ${save_dir}
+			mkdir -p ${save_dir}
+			cp -f ${input_py} ${save_dir}
+			cp -f ${output_s} ${save_dir}
+			cp -f ${output_exe} ${save_dir}
+			cp -f ${stdin_file} ${save_dir}
+			cp -f ${stdout_file} ${save_dir}
+			cp -f ${test_name}.out ${save_dir}
 		fi
 
 		# teardown the test

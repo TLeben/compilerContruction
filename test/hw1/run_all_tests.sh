@@ -1,8 +1,8 @@
 #!/bin/bash
 set -o nounset
 
-readonly COMPILER_DIR="${1:-}"
-readonly RUNTIME_DIR="${2:-}"
+readonly COMPILER_DIR="$(pwd)/../.."
+readonly RUNTIME_DIR="$(pwd)/../../runtime"
 
 for sub_dir in $(ls -d */)
 do
