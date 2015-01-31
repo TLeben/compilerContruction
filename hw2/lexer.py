@@ -22,14 +22,17 @@ class Lexer:
         'ID',
         'INPUT',
         'INT',
+        'NEWLINE',
         'PLUS',
         'LPAREN',
         'RPAREN',
         'UNARY_SUB'
+        # 'NEWLINE'
     ] + list(reserved.values())
 
     # Regex rules for simple tokens
     t_ASSIGN = r'='
+    # t_COMMA = r','
     t_PLUS = r'\+'
     # avoid rules for reserved words bc this will pick up 'printed'
     # good test case
@@ -45,7 +48,7 @@ class Lexer:
         r'input\(\)'
         t.value = 'input'
         return t
-        
+
     # Regrex rule with action code
     def t_INT(self, t):
         r'\d+'
@@ -73,9 +76,11 @@ class Lexer:
     t_ignore = ' \t'
 
     # rule to track line numbers
-    def t_newline(self, t):
+    def t_NEWLINE(self, t):
         r'\n+'
         t.lexer.lineno += t.value.count("\n")
+        t.value = '\\n'
+        return t
 
     def t_error(self, t):
         print "Illegal character '%s'" % t.value[0]
@@ -99,4 +104,3 @@ class Lexer:
 
     def token(self):
         return self.lexer.token()
-
