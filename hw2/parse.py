@@ -2,7 +2,9 @@
 
 # parse.py
 
-import ply.yacc as yacc
+import sys
+sys.path.append('ply-3.4')
+import yacc
 from compiler.ast import *
 from lexer import Lexer
 
