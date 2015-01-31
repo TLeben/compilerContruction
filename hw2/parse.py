@@ -40,18 +40,7 @@ class Parser:
         if self.debug >= 2:
             self.print_debug(t)
 
-        if len(t) == 4:
-            if isinstance(t[3], Stmt):
-                if self.debug >= 1:
-                    print 'len is 4 '
-                    print 't[3]', t[3].nodes
-                    print 't[1]', t[1]
-
-                t[0] = Stmt([t[1]] + t[3].nodes)
-
-                if self.debug >= 1:
-                    print t[0]
-        elif len(t) == 3:
+        if len(t) == 3:
             if isinstance(t[2], Stmt):
                 if self.debug >= 1:
                     print 'len is 3 ', t[1], t[2]
