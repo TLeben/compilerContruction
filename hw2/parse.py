@@ -120,6 +120,9 @@ class Parser:
             self.print_debug(t)
         if t[1] in self.ids:
             t[0] = Name(t[1])
+        else:
+            print 'Undefined variable: ', t[1]
+            t[0] = Name(t[1]
 
 
     #
