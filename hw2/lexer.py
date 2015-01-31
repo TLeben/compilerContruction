@@ -7,7 +7,9 @@
 # & callFunc (input())
 #
 
-import ply.lex as lex
+import sys
+sys.path.append('ply-3.4')
+import lex
 
 
 class Lexer:
