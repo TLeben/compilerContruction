@@ -677,7 +677,8 @@ class ASTourist(object):
 
         act.setNumVars(varCount)
         self.x86ast.addRecord(act)
-        print symTable
+        if self.debug >= 1:
+            print symTable
 
     def renderAssembly(self):
         fd = open(self.outFile, "w")
