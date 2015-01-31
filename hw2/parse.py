@@ -10,7 +10,10 @@ from lexer import Lexer
 #           a = -1 + 1  UnarySub is in the wrong order in Add (although a = 1 + -1 works)
 
 #           a = 1
-#           b = 2       The second assignment throws an error
+#           b = 2       The second assignment throws an error.  going from INT -> ID throws an error
+
+# @TODO: I feel like p_statement_expr should be called.  I shouldn't have to add a Stmt outside of that function.
+# @TODO: p_expression_name also doesn't seem to be getting called enough / at all
 
 class Parser:
     precedence = ( 
