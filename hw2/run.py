@@ -16,3 +16,6 @@ my_tree = parser.parse(inFile)
 print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 print my_tree
 print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+
+# Compare our AST with Python's built in AST
+print 'op-check: ', str(py_tree) == str(my_tree)
