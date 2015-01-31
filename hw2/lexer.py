@@ -13,19 +13,19 @@ import ply.lex as lex
 class Lexer:
     # reserved words go here as key:value pair
     reserved = {
-        'print': 'PRINT'
+        'print': 'PRINT',
     }
     # List of token names
     # This list is also used by yacc for terminals
     tokens = [
         'ASSIGN',
         'ID',
+        'INPUT',
         'INT',
         'PLUS',
         'LPAREN',
         'RPAREN',
-        'UNARY_SUB',
-        'CALL_FUNC'
+        'UNARY_SUB'
     ] + list(reserved.values())
 
     # Regex rules for simple tokens
@@ -40,6 +40,11 @@ class Lexer:
 
     def __init__(self, **kwargs):
         self.lexer = lex.lex(module=self, debug=False, **kwargs)
+
+    def t_INPUT(self, t):
+        r'input\(\)'
+        t.value = 'input'
+        return t
         
     # Regrex rule with action code
     def t_INT(self, t):
@@ -51,11 +56,7 @@ class Lexer:
             t.value = 0
         return t
 
-    def t_CALL_FUNC(self, t):
-        r'input\(\)'  # r'[a-zA-Z_][a-zA-Z_0-9]*/(/)'
-        t.value = t.value[:-2]
-        return t
-
+    # named values for assignment
     def t_ID(self, t):
         r'[a-zA-Z_][a-zA-Z_0-9]*'
         # check for reserved words
@@ -68,7 +69,7 @@ class Lexer:
         r'\#.*'
         pass
 
-    # String containing ignore characters (spaces adn tabs)
+    # String containing ignore characters (spaces and tabs)
     t_ignore = ' \t'
 
     # rule to track line numbers
@@ -79,7 +80,6 @@ class Lexer:
     def t_error(self, t):
         print "Illegal character '%s'" % t.value[0]
         t.lexer.skip(1)
-
 
     # Tokenize test with output
         # lexer.token() returns next instances of LexToken
@@ -96,24 +96,7 @@ class Lexer:
 
     def input(self, data):
         self.lexer.input(data)
-#        for tok in self.lexer:  # Give data to lexer with input()
-#            print tok
 
     def token(self):
         return self.lexer.token()
-#------------------------------------------------------------
-# testing out the lexer
-
-#data = '''
-## I am a comment and should not be a token
-#val = 3 + -8
-#print val
-#input = 4 + 9
-#val1 = (1 + 1)
-#val2 = ((2 + -3) + ((4 + 2)))
-#input()
-#'''
-#lx = Lexer()
-#lx.build()
-#lx.test(data)
 
