@@ -19,7 +19,7 @@ from lexer import Lexer
 
 
 class Parser:
-    DOCSTRING = 'Compiled by TangoMikes'
+
     precedence = (
         ('nonassoc', 'PRINT'),
         ('nonassoc', 'ASSIGN'),
@@ -27,8 +27,6 @@ class Parser:
         ('right', 'UNARY_SUB')
         # ('left', 'LPAREN', 'RPAREN')
     )
-
-    ids = {}
 
     def p_module(self, t):
         '''module : statement-list'''
@@ -64,14 +62,25 @@ class Parser:
 
     #
     # grammar rule
+    #   simple_statement ::= expression
+    #
+    def p_statement_expr(self, t):
+        'statement : expression'
+        if self.debug >= 1:
+            print "got statement"
+        if self.debug >= 2:
+            self.print_debug(t)
+        t[0] = Stmt(t[1])
+
+    #
+    # grammar rule
     #   <statement> ::= "print" <expression>
     #
     def p_print_statement(self, t):
         'statement : PRINT expression'
-        if self.debug >= 1:
-            print "got print "
+        if self.debug >= 2:
+            self.print_debug(t)
         t[0] = Printnl([t[2]], None)
-        # t[0] = t[1], t[2]
 
     #
     # grammar rule
@@ -81,9 +90,9 @@ class Parser:
         'statement : assName expression'
         if self.debug >= 1:
             print "got assign "
-        # ids[t[1]] = t[3]
+        if self.debug >= 2:
+            self.print_debug(t)
         t[0] = Assign([t[1]], t[2])
-        # t[0] = t[1], t[2], t[3]
 
     #
     # grammar rule
@@ -94,7 +103,15 @@ class Parser:
         if self.debug >= 1:
             print "got statement "
         t[0] = Discard(t[1])
-        # t[0] = t[1]
+
+        'statement : ID ASSIGN expression'
+        if self.debug >= 1:
+            print "got assign"
+        if self.debug >= 2:
+            self.print_debug(t)
+        self.ids[t[1]] = t[3]
+#        t[0] = Stmt([Assign([AssName(t[1], 'OP_ASSIGN')], t[3])])
+        t[0] = Assign([AssName(t[1], 'OP_ASSIGN')], t[3])
 
     #
     # grammar rule
@@ -103,12 +120,12 @@ class Parser:
     def p_expression_name(self, t):
         'expression : ID'
         if self.debug >= 1:
-            print "got name "
-        if self.debug >= 1:
-            print "t[0] = {}, t[1] = {}".format(t[0], t[1])
+            print "got name"
+        if self.debug >= 2:
+            self.print_debug(t)
         try:
-            t[0] = Name(t[1])
-            # t[0] = t[1]
+            # t[0] = Name(t[1])
+            t[0] = Name(self.ids[t[1]])
         except LookupError:
             print "Undefined name '%s'" % t[1]
             # t[0] = 0
@@ -120,7 +137,9 @@ class Parser:
     def p_int_expression(self, t):
         'expression : INT'
         if self.debug >= 1:
-            print "got int "
+            print "got int"
+        if self.debug >= 2:
+            self.print_debug(t)
         t[0] = Const(t[1])
     #
     # grammar rule
@@ -130,7 +149,9 @@ class Parser:
     def p_expression_unary_sub(self, t):
         'expression : UNARY_SUB expression'
         if self.debug >= 1:
-            print "got unary sub "
+            print "got unary sub"
+        if self.debug >= 2:
+            self.print_debug(t)
         t[0] = UnarySub(t[2])
 
     #
@@ -140,9 +161,10 @@ class Parser:
     def p_plus_expression(self, t):
         'expression : expression PLUS expression'
         if self.debug >= 1:
-            print "got n + n "
+            print "got n + n"
+        if self.debug >= 2:
+            self.print_debug(t)
         t[0] = Add([t[1], t[3]])
-        # t[0] = t[1], t[2], t[3]
 
     #
     # grammar rule
@@ -151,7 +173,9 @@ class Parser:
     def p_expression_group(self, t):
         'expression : LPAREN expression RPAREN'
         if self.debug >= 1:
-            print "got parens "
+            print "got parens"
+        if self.debug >= 2:
+            self.print_debug(t)
         t[0] = t[2]
 
     #
@@ -161,7 +185,9 @@ class Parser:
     def p_expression_input(self, t):
         'expression : INPUT'
         if self.debug >= 1:
-            print "got input() "
+            print "got input()"
+        if self.debug >= 2:
+            self.print_debug(t)
         t[0] = CallFunc(Name(t[1]), [], None, None)
 
     #
@@ -176,8 +202,25 @@ class Parser:
         print "Syntax error at '%s'" % t.value
         print self.parser.token()
 
+    def print_debug(self, t):
+        try:
+            print "+++++++++++++++++++++++"
+            print "t[0] = |{}|".format(t[0])
+            print "t[1] = |{}|".format(t[1])
+            print "t[2] = |{}|".format(t[2])
+            print "t[3] = |{}|".format(t[3])
+            print "t[4] = |{}|".format(t[4])
+            print "t[5] = |{}|".format(t[5])
+            print "t[6] = |{}|".format(t[6])
+            print "t[7] = |{}|".format(t[7])
+            print "t[8] = |{}|".format(t[8])
+            print "t[9] = |{}|".format(t[9])
+            print "+++++++++++++++++++++++"
+        except IndexError:
+            print "+++++++++++++++++++++++"
+
     def __init__(self, **kwargs):
-        self.debug = 1
+        self.debug = 2
         self.ids = {}
         self.lexer = Lexer()
         self.tokens = self.lexer.tokens
