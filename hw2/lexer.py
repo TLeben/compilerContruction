@@ -22,7 +22,7 @@ class Lexer:
         'ID',
         'INPUT',
         'INT',
-        'NEWLINE',
+        
         'PLUS',
         'LPAREN',
         'RPAREN',
@@ -79,8 +79,8 @@ class Lexer:
     def t_NEWLINE(self, t):
         r'\n+'
         t.lexer.lineno += t.value.count("\n")
-        t.value = '\\n'
-        return t
+        #t.value = '\\n'
+        #return t
 
     def t_error(self, t):
         print "Illegal character '%s'" % t.value[0]
