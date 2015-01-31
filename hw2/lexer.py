@@ -75,7 +75,7 @@ class Lexer:
     # rule to track line numbers
     def t_newline(self, t):
         r'\n+'
-        t.lexer.lineno += t.value.count('\n')
+        t.lexer.lineno += t.value.count("\n")
 
     def t_error(self, t):
         print "Illegal character '%s'" % t.value[0]

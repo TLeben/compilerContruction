@@ -6,11 +6,19 @@ import ply.yacc as yacc
 from compiler.ast import *
 from lexer import Lexer
 
+# @TODO: failing test cases
+#           a = -1 + 1  UnarySub is in the wrong order in Add (although a = 1 + -1 works)
+
+#           a = 1
+#           b = 2       The second assignment throws an error
+
 class Parser:
     precedence = ( 
         ('nonassoc','PRINT'),
         ('left','PLUS')
         )   
+
+    ids = { }
 
     #
     # grammar rule
@@ -19,7 +27,7 @@ class Parser:
     def p_print_statement(self, t):
         'statement : PRINT expression'
         if self.debug >= 1: print "got print"
-        t[0] = Printnl(t[2], None)
+        t[0] = Stmt([Printnl([t[2]], None)])
 
 
     #
@@ -29,8 +37,8 @@ class Parser:
     def p_assign_statement(self, t):
         'statement : ID ASSIGN expression'
         if self.debug >= 1: print "got assign"
-        self.ids[t[1]] = t[3]
-        t[0] = Assign(AssName(t[1], 'OP_ASSIGN'), t[3])
+        ids[t[1]] = t[3]
+        t[0] = Stmt([Assign([AssName(t[1], 'OP_ASSIGN')], t[3])])
 
 
     #
@@ -50,8 +58,9 @@ class Parser:
     def p_expression_name(self, t):
         'expression : ID'
         if self.debug >= 1: print "got name"
+        if self.debug >= 1: print "t[0] = {}, t[1] = {}".format(t[0], t[1])
         try:
-            t[0] = Name(self.ids[t[1]])
+            t[0] = Name(ids[t[1]])
         except LookupError:
             print "Undefined name '%s'" % t[1]
             t[0] = 0
@@ -104,7 +113,7 @@ class Parser:
     def p_expression_input(self, t):
         'expression : INPUT'
         if self.debug >= 1: print "got input()"
-        t[0] = CallFunc(t[1], 0)
+        t[0] = CallFunc(Name(t[1]), [], None, None)
 
 
     def p_error(self, t):

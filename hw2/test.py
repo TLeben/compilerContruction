@@ -1,3 +1,4 @@
 #!/usr/bin/env python
 
-x = input()
+aa = 1
+bb = 2

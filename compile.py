@@ -6,6 +6,9 @@ import sys
 import compiler
 from subprocess import call
 
+sys.path.append('hw2')
+from parse import Parser
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print 'Usage: %s <pythonFile.py>' % (sys.argv[0])
@@ -30,7 +33,9 @@ if __name__ == "__main__":
     # create the x86 assembly
     #
     try:
-        tree = compiler.parseFile(inFile)
+#        tree = compiler.parseFile(inFile)
+        tree = Parser().parse(inFile)
+
     except IOError as e:
         print 'Unable to open %s: %s' % (inFile, e)
     else:
