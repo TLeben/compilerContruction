@@ -127,8 +127,8 @@ class Parser:
             print "got name"
         if self.debug >= 2:
             self.print_debug(t)
-
-        t[0] = Name(t[1])
+        if t[1] in self.ids:
+            t[0] = Name(t[1])
 
 
     #
@@ -212,6 +212,7 @@ class Parser:
         if self.debug >= 2:
             self.print_debug(t)
 
+        self.ids.append(t[1])
         t[0] = AssName(t[1], 'OP_ASSIGN')
 
     def p_error(self, t):
@@ -237,7 +238,7 @@ class Parser:
 
     def __init__(self, **kwargs):
         self.debug = 0
-        self.ids = {}
+        self.ids = []
         self.lexer = Lexer()
         self.tokens = self.lexer.tokens
         self.parser = yacc.yacc(module=self, **kwargs)

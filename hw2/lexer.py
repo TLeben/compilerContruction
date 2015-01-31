@@ -40,7 +40,7 @@ class Lexer:
         self.lexer = lex.lex(module=self, debug=False, **kwargs)
 
     def t_INPUT(self, t):
-        r'input\(\)'
+        r'input\(\s*\)'
         t.value = 'input'
         return t
 
