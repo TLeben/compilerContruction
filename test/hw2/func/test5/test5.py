@@ -2,6 +2,7 @@
 
 printer = input() + 5
 inputter = printer + input()
-
-print printer + inputter+(-input())
+inputlr = 0
+printnl = printer + inputlr
+print printnl + inputter+(-input(                )         )
 
