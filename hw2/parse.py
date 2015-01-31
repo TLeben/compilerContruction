@@ -25,6 +25,7 @@ class Parser:
         ('nonassoc', 'ASSIGN'),
         ('left', 'PLUS'),
         ('right', 'UNARY_SUB')
+        # ('left', 'LPAREN', 'RPAREN')
     )
 
     ids = {}
@@ -151,7 +152,7 @@ class Parser:
         'expression : LPAREN expression RPAREN'
         if self.debug >= 1:
             print "got parens "
-        # t[0] = t[2]
+        t[0] = t[2]
 
     #
     # grammar rule
