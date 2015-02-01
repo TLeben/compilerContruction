@@ -30,10 +30,12 @@ class Parser:
     # grammar rule
     #   <statement-list> ::= statement "\n" statement-list
     #                      | statement    **provides closure for <statement-list>
+    #                      | empty        **handles empty file
     #
     def p_statement_list(self, t):
         '''statement-list : statement statement-list
-                          | statement'''
+                          | statement
+                          | empty'''
 
         if self.debug >= 1:
             print "got statement list"
@@ -49,7 +51,10 @@ class Parser:
         else:
             if self.debug >= 1:
                 print 'got st', t[1]
-            t[0] = Stmt([t[1]])
+            if t[1]:
+                t[0] = Stmt([t[1]])
+            else:
+                t[0] = Stmt([])
 
     #
     # grammar rule
@@ -198,9 +203,16 @@ class Parser:
         self.ids.append(t[1])
         t[0] = AssName(t[1], 'OP_ASSIGN')
 
+    def p_empty(self, t):
+        'empty :'
+        pass
+
     def p_error(self, t):
-        print "Syntax error at '%s'" % t.value
-        print self.parser.token()
+        try:
+            print "Syntax error at '%s'" % t.value
+        except:
+            pass
+        #print self.parser.token()
 
     def print_debug(self, t):
         try:

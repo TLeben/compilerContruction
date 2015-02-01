@@ -700,9 +700,5 @@ if __name__ == "__main__":
         tree = compiler.parseFile(sys.argv[1])
     except IOError as e:
         print 'Unable to open %s: %s' % (sys.argv[1], e)
-    else:
-        visitor = ASTourist(sys.argv[1][:-3] + ".s")
-        compiler.walk(tree, visitor, walker=ASTVisitor())
-        visitor.breadth()
-        visitor.toInterCode()
-        visitor.renderAssembly()
+    except:
+        pass

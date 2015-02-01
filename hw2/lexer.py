@@ -68,6 +68,9 @@ class Lexer:
     def t_COMMENT(self, t):
         r'\#.*'
         pass
+    def t_blockComment(self, t):
+        r"'{3}(\s|.|\n)*?'{3}"
+        pass
 
     # String containing ignore characters (spaces and tabs)
     t_ignore = ' \t'
