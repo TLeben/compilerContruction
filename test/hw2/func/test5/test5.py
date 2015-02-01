@@ -3,6 +3,6 @@
 printer = input() + 5
 inputter = printer + input()
 inputlr = 0
-printnl = printer + inputlr
-print printnl + inputter+(-input(                )         )
+println = printer + inputlr
+print println + inputter+(-input(                )         )
 
