@@ -8,6 +8,7 @@ import yacc
 from compiler.ast import *
 from lexer import Lexer
 
+
 class Parser:
     precedence = (
         ('nonassoc', 'PRINT'),
@@ -24,7 +25,6 @@ class Parser:
             self.print_debug(t)
 
         t[0] = Module(None, t[1])
-
 
     #
     # grammar rule
@@ -51,7 +51,6 @@ class Parser:
                 print 'got st', t[1]
             t[0] = Stmt([t[1]])
 
-
     #
     # grammar rule
     #   simple_statement ::= expression
@@ -64,7 +63,6 @@ class Parser:
             self.print_debug(t)
 
         t[0] = Discard(t[1])
-
 
     #
     # grammar rule
@@ -79,7 +77,6 @@ class Parser:
 
         t[0] = Printnl([t[2]], None)
 
-
     #
     # grammar rule
     #   statement ::= name "=" expression
@@ -93,20 +90,18 @@ class Parser:
 
         t[0] = Assign([t[1]], t[2])
 
-
     #
     # grammar rule
     #   statement ::= "discard" <expression>
     #
-    def p_statement_expr(self, t):
-        'statement : ID ASSIGN expression'
-        if self.debug >= 1:
-            print "got assign expr"
-        if self.debug >= 2:
-            self.print_debug(t)
+    # def p_statement_expr(self, t):
+    #     'statement : expression'
+    #     if self.debug >= 1:
+    #         print "got assign expr"
+    #     if self.debug >= 2:
+    #         self.print_debug(t)
 
-        t[0] = Assign([AssName(t[1], 'OP_ASSIGN')], t[3])
-
+    #     t[0] = Discard(t[1])
 
     #
     # grammar rule
@@ -122,8 +117,7 @@ class Parser:
             t[0] = Name(t[1])
         else:
             print 'Undefined variable: ', t[1]
-            t[0] = Name(t[1]
-
+            t[0] = Name(t[1])
 
     #
     # grammar rule
@@ -138,7 +132,6 @@ class Parser:
 
         t[0] = Const(t[1])
 
-
     #
     # grammar rule
     #   <expression> ::= "-" <expression>
@@ -151,7 +144,6 @@ class Parser:
             self.print_debug(t)
 
         t[0] = UnarySub(t[2])
-
 
     #
     # grammar rule
@@ -166,7 +158,6 @@ class Parser:
 
         t[0] = Add([t[1], t[3]])
 
-
     #
     # grammar rule
     #   expression ::= "(" <expression> ")"
@@ -180,7 +171,6 @@ class Parser:
 
         t[0] = t[2]
 
-
     #
     # grammar rule
     #   expression ::= "input" "(" ")"
@@ -193,7 +183,6 @@ class Parser:
             self.print_debug(t)
 
         t[0] = CallFunc(Name(t[1]), [], None, None)
-
 
     #
     # grammar rule
@@ -248,4 +237,3 @@ class Parser:
             print "======================================================="
 
         return self.parser.parse(f.read(), lexer=self.lexer, debug=False, *args, **kwargs)
-
