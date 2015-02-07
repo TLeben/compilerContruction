@@ -102,3 +102,5 @@ echo -e "\t\t\t~~~~~~~~~~~~~~~~~"
 echo
 echo
 
+sleep 2
+

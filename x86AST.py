@@ -7,8 +7,63 @@ import sys
 @TODO It would be nice to make some sort of meta-instructions like do_print which puts the argument on the stack, calls print, and pops the stack
 '''
 
+DEBUG = 1
+
 ##------------------------------------------------------------------##
 
+class x86NoOpInstruction(object):
+
+    '''
+    Abstraction an x86 instruction that takes no arguments
+    '''
+    def __init__(self, name):
+        self.name = name
+        self.debug = DEBUG
+
+        if self.debug >= 1:
+            print "New Instruction:  {}".format(self.name)
+
+    def prettyPrint(self, fd):
+        fd.write("\t{}\n".format(self.name))
+
+##------------------------------------------------------------------##
+
+class x86OneOpInstruction(object):
+
+    '''
+    Abstraction of a single operand x86 instruction
+    '''
+    def __init__(self, name, op):
+        self.name = name
+        self.op = op
+        self.debug = DEBUG
+
+        if self.debug >= 1:
+            print "New Instruction:  {} {}".format(self.name, self.op)
+
+    def prettyPrint(self, fd):
+        fd.write("\t{} {}\n".format(self.name, self.op))
+        
+##------------------------------------------------------------------##
+
+class x86TwoOpInstruction(object):
+
+    '''
+    Abstraction of a double operand x86 instruction
+    '''
+    def __init__(self, name, lhs, rhs):
+        self.name = name
+        self.rhs = rhs
+        self.lhs = lhs
+        self.debug = DEBUG
+
+        if self.debug >= 1:
+            print "New Instruction:  {} {}, {}".format(self.name, self.lhs, self.rhs)
+
+    def prettyPrint(self, fd):
+        fd.write("\t{} {}, {}\n".format(self.name, self.lhs, self.rhs))
+
+##------------------------------------------------------------------##
 
 class x86AST(object):
 
@@ -23,10 +78,14 @@ class x86AST(object):
     def addRecord(self, record=None):
         self.records.append(record)
 
+    def getInstructions(self):
+        return self.records
+
+    def setInstructions(self, instructions=None):
+        self.records = instructions
     '''
     Iterate over the set of activation records and print the assembly
     '''
-
     def prettyPrint(self, fd):
         # @TODO I'm assuming this won't always be true in the future
         fd.write(".globl main\n")
@@ -115,320 +174,317 @@ class x86Postamble(object):
 ##------------------------------------------------------------------##
 
 
-class x86Add(object):
+class x86Add(x86TwoOpInstruction):
 
     '''
     Abstraction of the x86 addl instruction
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+        super(x86Add, self).__init__("addl", lhs, rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\taddl {}, {}\n".format(self.lhs, self.rhs))
+        super(x86Add, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Call(object):
+class x86Call(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 call instruction
     '''
 
     def __init__(self, func=None):
-        self.func = func
+        super(x86Call, self).__init__("call", func)
 
     def prettyPrint(self, fd):
-        fd.write("\tcall {}\n".format(self.func))
+        super(x86Call, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86CallPtr(object):
+class x86CallPtr(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 call* instruction
     '''
 
     def __init__(self, func=None):
-        self.func = func
+        super(x86CallPtr, self).__init__("call*", func)
 
     def prettyPrint(self, fd):
-        fd.write("\tcall *{}\n".format(self.func))
+        super(x86CallPtr, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Cmpl(object):
+class x86Cmp(x86TwoOpInstruction):
 
     '''
     Abstraction of the x86 cmpl instruction
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+        super(x86Cmp, self).__init__("cmpl", lhs, rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\tcmpl {}, {}\n".format(self.lhs, self.rhs))
+        super(x86Cmp, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Je(object):
+class x86Je(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 je instruction
     '''
 
     def __init__(self, label=None):
-        self.label = label
+        super(x86Je, self).__init__("je", label)
 
     def prettyPrint(self, fd):
-        fd.write("\tje {}\n".format(self.label))
+        super(x86Je, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Jmp(object):
+class x86Jmp(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 jmp instruction
     '''
 
     def __init__(self, label=None):
-        self.label = label
+        super(x86Jmp, self).__init__("jmp", label)
 
     def prettyPrint(self, fd):
-        fd.write("\tjmp {}\n".format(self.label))
+        super(x86Jmp, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Leave(object):
+class x86Leave(x86NoOpInstruction):
 
     '''
     Abstraction of the x86 leave instruction
     '''
 
+    def __init__(self):
+        super(x86Leave, self).__init__("leave")
+
     def prettyPrint(self, fd):
-        fd.write("\tleave\n")
+        super(x86Leave, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Mov(object):
+class x86Mov(x86TwoOpInstruction):
 
     '''
     Abstraction of the x86 movl instruction
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+        super(x86Mov, self).__init__("movl", lhs, rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\tmovl {}, {}\n".format(self.lhs, self.rhs))
+        super(x86Mov, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Movzbl(object):
+class x86Movzb(x86TwoOpInstruction):
 
     '''
     Abstraction of the x86 movzbl instruction
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+        super(x86Movzb, self).__init__("movzbl", lhs, rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\tmovzbl {}, {}\n".format(self.lhs, self.rhs))
+        super(x86Movzb, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Neg(object):
+class x86Neg(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 negl instruction
     '''
 
     def __init__(self, reg=None):
-        self.reg = reg
+        super(x86Neg, self).__init__("negl", reg)
 
     def prettyPrint(self, fd):
-        fd.write("\tnegl {}\n".format(self.reg))
+        super(x86Neg, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Not(object):
+class x86Not(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 notl instruction
     '''
 
     def __init__(self, reg=None):
-        self.reg = reg
+        super(x86Not, self).__init__("notl", reg)
 
     def prettyPrint(self, fd):
-        fd.write("\tnotl {}\n".format(self.reg))
+        super(x86Not, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Or(object):
+class x86Or(x86TwoOpInstruction):
 
     '''
     Abstraction of the x86 orl instruction
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+        super(x86Or, self).__init__("orl", lhs, rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\torl {}, {}\n".format(self.lhs, self.rhs))
+        super(x86Or, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86And(object):
+class x86And(x86TwoOpInstruction):
 
     '''
     Abstraction of the x86 andl instruction
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+        super(x86And, self).__init__("andl", lhs, rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\tandl {}, {}\n".format(self.lhs, self.rhs))
+        super(x86And, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Pop(object):
+class x86Pop(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 popl instruction
     '''
 
     def __init__(self, reg=None):
-        self.reg = reg
+        super(x86Pop, self).__init__("popl", reg)
 
     def prettyPrint(self, fd):
-        fd.write("\tpopl {}\n".format(self.reg))
+        super(x86Pop, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Push(object):
+class x86Push(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 pushl instruction
     '''
 
     def __init__(self, reg=None):
-        self.reg = reg
+        super(x86Push, self).__init__("pushl", reg)
 
     def prettyPrint(self, fd):
-        fd.write("\tpushl {}\n".format(self.reg))
+        super(x86Push, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Ret(object):
+class x86Ret(x86NoOpInstruction):
 
     '''
     Abstraction of the x86 ret instruction
     '''
 
+    def __init__(self):
+        super(x86Ret, self).__init__("ret")
+
     def prettyPrint(self, fd):
-        fd.write("\tret\n")
+        super(x86Ret, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Sall(object):
+class x86Sal(x86TwoOpInstruction):
 
     '''
     Abstraction of the x86 sall instruction
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+        super(x86Sal, self).__init__("sall", lhs, rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\tsall {}, {}\n".format(self.lhs, self.rhs))
+        super(x86Sal, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Sarl(object):
+class x86Sar(x86TwoOpInstruction):
 
     '''
     Abstraction of the x86 sarl instruction
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+        super(x86Sar, self).__init__("sarl", lhs, rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\tsarl {}, {}\n".format(self.lhs, self.rhs))
+        super(x86Sar, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Sete(object):
+class x86Sete(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 sete instruction
     '''
 
     def __init__(self, reg=None):
-        self.reg = reg
+        super(x86Sete, self).__init__("sete", reg)
 
     def prettyPrint(self, fd):
-        fd.write("\tsete {}\n".format(self.reg))
+        super(x86Sete, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Setne(object):
+class x86Setne(x86OneOpInstruction):
 
     '''
     Abstraction of the x86 setne instruction
     '''
 
     def __init__(self, reg=None):
-        self.reg = reg
+        super(x86Setne, self).__init__("setne", reg)
 
     def prettyPrint(self, fd):
-        fd.write("\tsetne {}\n".format(self.reg))
+        super(x86Setne, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
 
-class x86Sub(object):
+class x86Sub(x86TwoOpInstruction):
 
     '''
     Abstraction of the x86 subl instruction
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+        super(x86Sub, self).__init__("subl", lhs, rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\tsubl {}, {}\n".format(self.lhs, self.rhs))
+        super(x86Sub, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 

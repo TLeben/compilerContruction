@@ -2,13 +2,16 @@
 
 from ASTourist import ASTourist
 from ASTourist import ASTVisitor
+from RegisterAllocator import *
+
 import sys
 import compiler
 from subprocess import call
 
-sys.path.append('hw2')
-sys.path.append('hw2/ply-3.4')
-from parse import Parser
+# Homework 2
+# sys.path.append('hw2')
+# sys.path.append('hw2/ply-3.4')
+# from parse import Parser
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -34,15 +37,26 @@ if __name__ == "__main__":
     # create the x86 assembly
     #
     try:
-#        tree = compiler.parseFile(inFile)
-        tree = Parser().parse(inFile)
+        tree = compiler.parseFile(inFile)
+
+        # Homework 2
+        # tree = Parser().parse(inFile)
 
     except IOError as e:
         print 'Unable to open %s: %s' % (inFile, e)
     else:
+        # walk the Abstract Syntax Tree
         visitor = ASTourist(outFile, debug=0)
         compiler.walk(tree, visitor, walker=ASTVisitor())
         visitor.breadth()
+
+        # x86 instruction selection
         visitor.toInterCode()
+
+        # register allocation
+        allocator = RegisterAllocator()
+        allocator.livenessAnalysis(visitor)
+
+        # generate final x86 assembly
         visitor.renderAssembly()
 

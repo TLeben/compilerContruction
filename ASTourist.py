@@ -534,9 +534,6 @@ class ASTourist(object):
                 # start to x86 instruction
                 if quad.arg1 in symTable:
                     src = symTable[quad.arg1]
-                    if self.debug >= 2:
-                        print(
-                            "act.addInstruction(x86Mov({}, {}))".format(src, '%eax'))
                     act.addInstruction(x86Mov(src, '%eax'))
                     act.addInstruction(x86Mov('%eax', symTable[quad.result]))
                 else:
@@ -556,9 +553,6 @@ class ASTourist(object):
                     reg = symTable[quad.arg1]
                 else:
                     reg = None
-                if self.debug >= 2:
-                    print(
-                        "act.addInstruction(x86MetaPrintInt({}, {}))".format(quad.arg1, reg))
                 act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
                 # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
@@ -574,14 +568,9 @@ class ASTourist(object):
                 # start to x86 instruction
                 # TODO move this to a meta-instruction in x86AST.py
                 # call <function name>
-                if self.debug >= 2:
-                    print("act.addInstruction(x86Call({}))".format(quad.arg1))
                 act.addInstruction(x86Call(quad.arg1))
                 # movl %eax, -X(%ebp)
                 symTable[quad.result] = quad.getStackPos(varCount)
-                if self.debug >= 2:
-                    print("act.addInstruction(x86Mov({}, {}))".format(
-                        '%eax', symTable[quad.result]))
                 act.addInstruction(x86Mov('%eax', symTable[quad.result]))
                 # end to x86
                 varCount += 1
@@ -600,35 +589,17 @@ class ASTourist(object):
                 # TODO move this to a meta-instruction in x86AST.py
                 if quad.arg1 in symTable:
                     src = symTable[quad.arg1]
-                    if self.debug >= 2:
-                        print(
-                            "act.addInstruction(x86Mov({}, {}))".format(src, '%eax'))
                     act.addInstruction(x86Mov(src, '%eax'))
-                    if self.debug >= 2:
-                        print("act.addInstruction(x86Mov({}, {}))".format(
-                            '%eax', symTable[quad.result]))
                     act.addInstruction(x86Mov('%eax', symTable[quad.result]))
                 else:
                     src = '$' + str(quad.arg1)
-                    if self.debug >= 2:
-                        print("act.addInstruction(x86Mov({}, {}))".format(
-                            src, symTable[quad.result]))
                     act.addInstruction(x86Mov(src, symTable[quad.result]))
                 if quad.arg2 in symTable:
                     src = symTable[quad.arg2]
-                    if self.debug >= 2:
-                        print(
-                            "act.addInstruction(x86Mov({}, {}))".format(src, '%eax'))
                     act.addInstruction(x86Mov(src, '%eax'))
-                    if self.debug >= 2:
-                        print ("act.addInstruction(x86Add({}, {}))".format(
-                            '%eax', symTable[quad.result]))
                     act.addInstruction(x86Add('%eax', symTable[quad.result]))
                 else:
                     src = '$' + str(quad.arg2)
-                    if self.debug >= 2:
-                        print("act.addInstruction(x86Add({}, {}))".format(
-                            src, symTable[quad.result]))
                     act.addInstruction(x86Add(src, symTable[quad.result]))
                 # end to x86
                 varCount += 1
@@ -648,24 +619,12 @@ class ASTourist(object):
                 # if true we load mem location else we toss a number into eax
                 if quad.arg1 in symTable:
                     src = symTable[quad.arg1]
-                    if self.debug >= 2:
-                        print(
-                            "act.addInstruction(x86Mov({}, {}))".format(src, '%eax'))
                     act.addInstruction(x86Mov(src, '%eax'))
-                    if self.debug >= 2:
-                        print("act.addInstruction(x86Mov({}, {}))".format(
-                            '%eax', symTable[quad.result]))
                     act.addInstruction(x86Mov('%eax', symTable[quad.result]))
                 else:
                     src = '$' + str(quad.arg1)
-                    if self.debug >= 2:
-                        print("act.addInstruction(x86Mov({}, {}))".format(
-                            src, symTable[quad.result]))
                     act.addInstruction(x86Mov(src, symTable[quad.result]))
                 # finally we add: negl -X(%ebp)
-                if self.debug >= 2:
-                    print(
-                        "act.addInstruction(x86Neg({}))".format(symTable[quad.result]))
                 act.addInstruction(x86Neg(symTable[quad.result]))
                 # end to x86
                 varCount += 1
