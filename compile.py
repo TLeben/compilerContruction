@@ -13,6 +13,8 @@ from subprocess import call
 # sys.path.append('hw2/ply-3.4')
 # from parse import Parser
 
+DEBUG = 0
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print 'Usage: %s <pythonFile.py>' % (sys.argv[0])
@@ -46,17 +48,29 @@ if __name__ == "__main__":
         print 'Unable to open %s: %s' % (inFile, e)
     else:
         # walk the Abstract Syntax Tree
-        visitor = ASTourist(outFile, debug=0)
+        visitor = ASTourist(outFile, debug=DEBUG)
         compiler.walk(tree, visitor, walker=ASTVisitor())
         visitor.breadth()
 
         # x86 instruction selection
         visitor.toInterCode()
 
+        if DEBUG >= 1:
+            print "DEBUG:  before register allocation"
+            print "------------------------------------------"
+            visitor.renderAssembly(stdout=True)
+            print "------------------------------------------"
+
         # register allocation
-        allocator = RegisterAllocator()
-        allocator.livenessAnalysis(visitor)
+        allocator = RegisterAllocator(visitor, debug=DEBUG)
+        allocator.livenessAnalysis()
 
         # generate final x86 assembly
-        visitor.renderAssembly()
+        if DEBUG >= 1:
+            print "DEBUG:  after register allocation"
+            print "------------------------------------------"
+            visitor.renderAssembly(stdout=True)
+            print "------------------------------------------"
+        else:
+            visitor.renderAssembly(stdout=False)
 

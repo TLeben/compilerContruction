@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 
 '''
-@TODO add function to convert inter-code to x86
-@TODO Modify toInterCode() to write to file instead of print to stdout.
-@TODO integrate x86AST with toInterCode.
-    Need to implement as a list/array of Quadruples.
+@TODO:  Replace actual registers in toInterCode with placeholders
 '''
 
 import compiler
@@ -553,7 +550,22 @@ class ASTourist(object):
                     reg = symTable[quad.arg1]
                 else:
                     reg = None
-                act.addInstruction(x86MetaPrintInt(quad.arg1, reg))
+
+                # ---- begin meta print ---- #
+                # Push arg we want to print to the stack
+                if reg is None:
+                    # push an integer ie pushl $42
+                    act.addInstruction(x86Push("$" + str(quad.arg1)))
+                else:
+                    # push a mem-location to the stack, ie pushl -12(%ebp)
+                    act.addInstruction(x86Push(reg))
+
+                # call print_int_nl
+                act.addInstruction(x86Call("print_int_nl"))
+                # pop the stack 
+                act.addInstruction(x86Add("$4", "%esp"))
+                # ---- end meta print ---- #
+
                 # end to x86
                 # varCount = 0  # temp vars no longer needed so we reset to t0
 
@@ -639,11 +651,18 @@ class ASTourist(object):
         if self.debug >= 1:
             print symTable
 
-    def renderAssembly(self):
-        fd = open(self.outFile, "w")
-        self.x86ast.prettyPrint(fd)
-        fd.close()
+    def renderAssembly(self, stdout=False):
+        fd = None
 
+        if stdout == False:
+            fd = open(self.outFile, "w")
+        else:
+            fd = sys.stdout
+
+        self.x86ast.prettyPrint(fd)
+
+        if stdout == False:
+            fd.close()
 
 if __name__ == "__main__":
     import sys

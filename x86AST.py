@@ -3,11 +3,7 @@
 from collections import deque
 import sys
 
-'''
-@TODO It would be nice to make some sort of meta-instructions like do_print which puts the argument on the stack, calls print, and pops the stack
-'''
-
-DEBUG = 1
+DEBUG = 0
 
 ##------------------------------------------------------------------##
 
@@ -78,11 +74,6 @@ class x86AST(object):
     def addRecord(self, record=None):
         self.records.append(record)
 
-    def getInstructions(self):
-        return self.records
-
-    def setInstructions(self, instructions=None):
-        self.records = instructions
     '''
     Iterate over the set of activation records and print the assembly
     '''
@@ -90,8 +81,8 @@ class x86AST(object):
         # @TODO I'm assuming this won't always be true in the future
         fd.write(".globl main\n")
 
-        while self.records:
-            self.records.popleft().prettyPrint(fd)
+        for rec in self.records:
+            rec.prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
@@ -116,11 +107,11 @@ class x86Activation(object):
     def setNumVars(self, numVars=0):
         self.numVars = numVars
 
+
     def prettyPrint(self, fd):
         # allocate stack space
         if self.numVars != 0:
-            self.instructions.appendleft(
-                x86Sub("$" + str(self.numVars * 4), "%esp"))
+            self.instructions.appendleft(x86Sub("$" + str(self.numVars * 4), "%esp"))
 
         # print the name of the function
         fd.write("{}:\n".format(self.name))
@@ -129,8 +120,8 @@ class x86Activation(object):
         self.preamble.prettyPrint(fd)
 
         # walk the list and print the instructions
-        while self.instructions:
-            self.instructions.popleft().prettyPrint(fd)
+        for instr in self.instructions:
+            instr.prettyPrint(fd)
 
         # print the postamble
         self.postamble.prettyPrint(fd)
@@ -150,8 +141,8 @@ class x86Preamble(object):
         self.instructions.append(x86Mov("%esp", "%ebp"))
 
     def prettyPrint(self, fd):
-        while self.instructions:
-            self.instructions.popleft().prettyPrint(fd)
+        for instr in self.instructions:
+            instr.prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
@@ -168,8 +159,8 @@ class x86Postamble(object):
         self.instructions.append(x86Ret())
 
     def prettyPrint(self, fd):
-        while self.instructions:
-            self.instructions.popleft().prettyPrint(fd)
+        for instr in self.instructions:
+            instr.prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
@@ -485,38 +476,4 @@ class x86Sub(x86TwoOpInstruction):
 
     def prettyPrint(self, fd):
         super(x86Sub, self).prettyPrint(fd)
-
-##------------------------------------------------------------------##
-
-
-class x86MetaPrintInt(object):
-
-    '''
-    Higher level representation of a call to print_int_nl
-    '''
-
-    def __init__(self, intVal=0, reg=None):
-        # attributes
-        #   intVal      the integer value to print                      example:  42
-        #   reg         the name of the register to store the value     example:  -4(%ebp)
-        self.intVal = intVal
-        self.reg = reg
-        self.instructions = deque()
-
-        # create the list of instructions
-        # Push arg we want to print to the stack
-        if reg is None:
-            # push an integer ie pushl $42
-            self.instructions.append(x86Push("$" + str(intVal)))
-        else:
-            # push a mem-location to the stack, ie pushl -12(%ebp)
-            self.instructions.append(x86Push(reg))
-        # call print_int_nl
-        self.instructions.append(x86Call("print_int_nl"))
-        # pop the stack 
-        self.instructions.append(x86Add("$4", "%esp"))
-
-    def prettyPrint(self, fd):
-        while self.instructions:
-            self.instructions.popleft().prettyPrint(fd)
 
