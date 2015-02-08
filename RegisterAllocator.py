@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+'''
+@TODO: Verify liveness analysis
+@TODO: Compute interference graph
+@TODO: Color the interference graph
+@TODO: Generate spill code
+'''
+
 from ASTourist import *
 from x86AST import *
 

@@ -107,7 +107,6 @@ class x86Activation(object):
     def setNumVars(self, numVars=0):
         self.numVars = numVars
 
-
     def prettyPrint(self, fd):
         # allocate stack space
         if self.numVars != 0:

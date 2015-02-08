@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-@TODO:  Replace actual registers in toInterCode with placeholders
+@TODO:  Replace registers in toInterCode with placeholders
 '''
 
 import compiler
