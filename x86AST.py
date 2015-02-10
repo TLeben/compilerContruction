@@ -20,7 +20,10 @@ class x86NoOpInstruction(object):
             print "New Instruction:  {}".format(self.name)
 
     def prettyPrint(self, fd):
-        fd.write("\t{}\n".format(self.name))
+        fd.write("\t{}\n".format(self.__str__()))
+
+    def __str__(self):
+        return "{}".format(self.name)
 
 ##------------------------------------------------------------------##
 
@@ -38,7 +41,10 @@ class x86OneOpInstruction(object):
             print "New Instruction:  {} {}".format(self.name, self.op)
 
     def prettyPrint(self, fd):
-        fd.write("\t{} {}\n".format(self.name, self.op))
+        fd.write("\t{}\n".format(self.__str__()))
+
+    def __str__(self):
+        return "{} {}".format(self.name, self.op)
         
 ##------------------------------------------------------------------##
 
@@ -57,7 +63,10 @@ class x86TwoOpInstruction(object):
             print "New Instruction:  {} {}, {}".format(self.name, self.lhs, self.rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\t{} {}, {}\n".format(self.name, self.lhs, self.rhs))
+        fd.write("\t{}\n".format(self.__str__()))
+
+    def __str__(self):
+        return "{} {}, {}".format(self.name, self.lhs, self.rhs)
 
 ##------------------------------------------------------------------##
 
@@ -154,6 +163,11 @@ class x86Postamble(object):
 
     def __init__(self):
         self.instructions = deque()
+
+        # Return value is put into %eax
+        # @TODO - return value is hard coded for now
+        self.instructions.append(x86Mov('$0', '%eax'))
+
         self.instructions.append(x86Leave())
         self.instructions.append(x86Ret())
 

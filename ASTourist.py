@@ -642,9 +642,6 @@ class ASTourist(object):
                 varCount += 1
             else:
                 self.stk.rotate(-1)
-        # Return value is put into %eax
-        # @TODO - return value is hard coded for now
-        act.addInstruction(x86Mov('$0', '%eax'))
 
         act.setNumVars(varCount)
         self.x86ast.addRecord(act)
