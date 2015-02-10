@@ -109,6 +109,7 @@ class x86Activation(object):
         self.postamble = x86Postamble() # postamble code for this activation
         self.numVars = 0                # the number of variables to reserve stack space for
         self.instructions = deque()     # list of x86 instructions
+        self.varsAllocated = False      # have we allocated stack space for this activation record?
 
     def addInstruction(self, instr=None):
         self.instructions.append(instr)
@@ -118,8 +119,9 @@ class x86Activation(object):
 
     def prettyPrint(self, fd):
         # allocate stack space
-        if self.numVars != 0:
+        if self.numVars != 0 and False == self.varsAllocated:
             self.instructions.appendleft(x86Sub("$" + str(self.numVars * 4), "%esp"))
+            self.varsAllocated = True
 
         # print the name of the function
         fd.write("{}:\n".format(self.name))

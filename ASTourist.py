@@ -44,9 +44,6 @@ class Quad(object):
             return '{0} = - {1}'.format(self.result, self.arg1)
         return "{0} = {1} {2} {3}".format(self.result, self.arg1, self.op, self.arg2)
 
-    def getStackPos(self, varCnt):
-        return '-' + str((varCnt + 1) * 4) + "(%ebp)"
-
 
 class ASTourist(object):
 
@@ -65,6 +62,22 @@ class ASTourist(object):
         self.stk = deque()
         self.stk.append('mkr')  # marks end of deque
         self.x86ast = x86AST()
+        self.tmpCounter = 0
+        self.regCounter = 0
+
+    def getNextTemp(self):
+        tmp = "___z" + str(self.tmpCounter)
+        self.tmpCounter += 1
+        return tmp
+
+    def getNextRegTemp(self):
+        ## old code ##
+#        tmp = '-' + str((self.regCounter + 1) * 4) + "(%ebp)"
+        ## new code ##
+        tmp = "___y" + str(self.regCounter)
+
+        self.regCounter += 1
+        return tmp
 
     def genericVisit(self, node):
         if self.debug >= 1:
@@ -508,7 +521,7 @@ class ASTourist(object):
         act = x86Activation("main")
         varCount = 0
         symTable = dict()
-        tmp = '____________t'
+        tmp = '___t'
         while self.stk:
             t = self.stk[0]
             quad = Quad()
@@ -527,7 +540,7 @@ class ASTourist(object):
                 quad.arg1 = self.stk.pop()
                 if self.debug >= 1:
                     print quad.toString()
-                symTable[quad.result] = quad.getStackPos(varCount)
+                symTable[quad.result] = self.getNextRegTemp()
                 # start to x86 instruction
                 if quad.arg1 in symTable:
                     src = symTable[quad.arg1]
@@ -573,7 +586,7 @@ class ASTourist(object):
             elif t == 'callFunc':
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
-                quad.result = hash(tmp + str(varCount))
+                quad.result = self.getNextTemp()
                 self.stk.appendleft(quad.result)
                 if self.debug >= 1:
                     print quad.toString()
@@ -582,7 +595,7 @@ class ASTourist(object):
                 # call <function name>
                 act.addInstruction(x86Call(quad.arg1))
                 # movl %eax, -X(%ebp)
-                symTable[quad.result] = quad.getStackPos(varCount)
+                symTable[quad.result] = self.getNextRegTemp()
                 act.addInstruction(x86Mov('%eax', symTable[quad.result]))
                 # end to x86
                 varCount += 1
@@ -592,10 +605,10 @@ class ASTourist(object):
                 quad.op = self.stk.popleft()
                 quad.arg2 = self.stk.pop()
                 quad.arg1 = self.stk.pop()
-                quad.result = hash(tmp + str(varCount))
+                quad.result = self.getNextTemp()
                 if self.debug >= 1:
                     print quad.toString()
-                symTable[quad.result] = quad.getStackPos(varCount)
+                symTable[quad.result] = self.getNextRegTemp()
                 self.stk.appendleft(quad.result)
                 # start to x86 instruction
                 # TODO move this to a meta-instruction in x86AST.py
@@ -620,10 +633,10 @@ class ASTourist(object):
             elif t == '(-)':
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
-                quad.result = hash(tmp + str(varCount))
+                quad.result = self.getNextTemp()
                 if self.debug >= 1:
                     print quad.toString()
-                symTable[quad.result] = quad.getStackPos(varCount)
+                symTable[quad.result] = self.getNextRegTemp()
                 self.stk.appendleft(quad.result)
 
                 # start to x86 instruction
