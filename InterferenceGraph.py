@@ -288,8 +288,9 @@ if __name__ == '__main__':
  >>>3 colors:{'a': 'blue', 'c': 'blue', 'b': 'red', 'e': 'red', 'd': 'green', 'f': 'blue'}
  
  >>>2 colors:{'a': 'green', 'c': 'green', 'b': 'red', 'e': 'red', 'f': 'green'}
-  *** d is missing
+  *** d is not here bc we colored the most vertices. 
     '''
+    #~~~~~~Testing~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     g = Graph()
     g.addNode('a')
     g.addArc('a', 'b')
@@ -299,12 +300,7 @@ if __name__ == '__main__':
     g.addArc('c', set(['e', 'd', 'b']))
     g.addArc('e', set(['d', 'f']))
     g.addArc('f', set(['d', 'e']))
-    g.colorGraph()
-
-
-
-    # print g.neighbors
-    # print g.domains
+    
     print g.colorGraph()
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    # make a graph
