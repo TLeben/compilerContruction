@@ -30,7 +30,8 @@ class Graph(object):
     '''
 
     def __init__(self):
-        self.values = ['%eax', '%ebx','%ecx']
+        ## @TODO use %eax as a value????
+        self.values = ['%ebx','%ecx','%edx','%esi', '%edi']
         self.vars = []     # variables that need registers
         self.neighbors = dict()  # {variable: [neighbors]} *can be empty list
         self.domains = dict()  # {variable: [possible domains]}
@@ -222,6 +223,15 @@ class Graph(object):
         return self.highBreaker([v for v in self.vars if v not in assignment],
                     lambda var : len(self.neighbors[var]))
     
+    def naturalOrder(self, assignment):
+        '''
+        Take them in the order they are added to graph
+        Not sure if order is guarenteed
+        '''
+        for v in self.vars:
+            if v not in assignment:
+                return v
+
     def minRemainingValues(self, assignment):
         '''
         Chooses the variable with the smallest domain set 
@@ -230,6 +240,7 @@ class Graph(object):
             [v for v in self.vars if v not in assignment],
             lambda var: self.validValues(var, assignment))
     
+    # This is a helper function
     def validValues(self, var, assignment):
         if self.currDomains:
             return len(self.currDomains[var])
@@ -244,11 +255,18 @@ class Graph(object):
         options = (self.currDomains or self.domains)[var]
         return sorted(options, key=lambda val: self.numConflicts(var, val, assignment))
 
+    def natOrder(self, var, assignment):
+        '''
+        Will use order that they are in the list, no sorting
+        '''
+        return (self.currDomains or self.domains)[var]
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    # ~~~~~~~~~~~~~~~~~~~Here is where the magic happens~~~~~~~~~~~~~~~
     def colorGraph(self,
-                   varSelect=minRemainingValues,
-                   domainSort=leastConstrainingValue,
+                   varSelect=naturalOrder,
+                   domainSort=natOrder,
                    inference=maintainArcConsistency):
 
         def backtrack(assignment):
@@ -275,7 +293,7 @@ class Graph(object):
         result = backtrack({})
         # assert result is None or self.goal_test(result)
         return result
-
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if __name__ == '__main__':
     '''
