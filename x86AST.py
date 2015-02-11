@@ -107,22 +107,15 @@ class x86Activation(object):
         self.name = name                # the name of the function
         self.preamble = x86Preamble()   # preamble code for this activation
         self.postamble = x86Postamble() # postamble code for this activation
-        self.numVars = 0                # the number of variables to reserve stack space for
         self.instructions = deque()     # list of x86 instructions
-        self.varsAllocated = False      # have we allocated stack space for this activation record?
 
     def addInstruction(self, instr=None):
         self.instructions.append(instr)
 
     def setNumVars(self, numVars=0):
-        self.numVars = numVars
+        self.preamble.setNumVars(numVars)
 
     def prettyPrint(self, fd):
-        # allocate stack space
-        if self.numVars != 0 and False == self.varsAllocated:
-            self.instructions.appendleft(x86Sub("$" + str(self.numVars * 4), "%esp"))
-            self.varsAllocated = True
-
         # print the name of the function
         fd.write("{}:\n".format(self.name))
 
@@ -142,13 +135,27 @@ class x86Activation(object):
 class x86Preamble(object):
 
     '''
-    Represents the preamble code to an activation
+    Represents the preamble code to an activation.  Also handles allocating stack space
     '''
 
     def __init__(self):
+        self.numVars = 0
         self.instructions = deque()
+
+        # these are always the first two instructions
         self.instructions.append(x86Push("%ebp"))
         self.instructions.append(x86Mov("%esp", "%ebp"))
+
+    def setNumVars(self, numVars=0):
+        if 0 != numVars:
+            # have we already allocated stack space?
+            if 0 != self.numVars:
+                # then remove the old allocation
+                self.instructions.pop()
+            else:
+                # allocate stack space
+                self.numVars = numVars
+                self.instructions.append(x86Sub("$" + str(self.numVars * 4), "%esp"))
 
     def prettyPrint(self, fd):
         for instr in self.instructions:
