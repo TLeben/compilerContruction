@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
         # register allocation
         allocator = RegisterAllocator(visitor, debug=DEBUG)
-        allocator.livenessAnalysis()
+        allocator.allocateRegisters()
 
         # generate final x86 assembly
         if DEBUG >= 1:
