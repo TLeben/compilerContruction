@@ -15,8 +15,8 @@ do
 		while [[ 1 -eq 1 ]]
 		do
 			if [[ -d test${count} ]]; then
-				cp -vf test${count}/test${count}.py ${tmp_dir}/${sub_dir}_test${count}.py
-				cp -vf test${count}/test${count}.in ${tmp_dir}/${sub_dir}_test${count}.in
+				cp -f test${count}/test${count}.py ${tmp_dir}/${sub_dir}_test${count}.py
+				cp -f test${count}/test${count}.in ${tmp_dir}/${sub_dir}_test${count}.in
 			else
 				break
 			fi

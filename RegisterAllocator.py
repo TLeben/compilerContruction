@@ -28,13 +28,30 @@ class RegisterAllocator(object):
         for rec in self.visitor.x86ast.records:
             instructions = rec.instructions
 
-            # ... iterate through the instructions in reverse order
-            # (this does not include the preamble, stack allocation, or postamble - including return value)
-            for instr in reversed(instructions):
-                self.computeLiveSet(instr)
-                self.updateGraph(instr)
+            foundHomes = False
+            while False == foundHomes:
+                # ... iterate through the instructions in reverse order
+                # (this does not include the preamble, stack allocation, or postamble - including return value)
+                for instr in reversed(instructions):
+                    self.computeLiveSet(instr)
+                    self.updateGraph(instr)
 
-            # now color the graph
+                # now color the graph
+                graph = self.interferenceGraph.colorGraph()
+                if self.debug >= 2:
+                    print graph
+
+                # generate spill code
+                foundHomes = not self.detectSpills(instructions)
+
+            # remove trivial moves
+            newInstructions = self.removeTrivials(instructions)
+
+            # assign homes
+            self.assignHomes(newInstructions, graph)
+
+            # replace the instructions with the new set
+            rec.instructions = newInstructions
 
     def computeLiveSet(self, instr):
         '''
@@ -44,14 +61,12 @@ class RegisterAllocator(object):
         Instruction     Read        Write
         -----------     ----        -----
         negl  a         {a}         {a}
-        popl  a         {esp}       {a,esp}
-        pushl a         {a,esp}     {esp}
+        popl  a         {}          {a}
+        pushl a         {a}         {}
 
         addl  a, b      {a,b}       {b}
         movl  a, b      {a}         {b}
         subl  a, b      {a,b}       {b}
-
-        call a          {}          {eax,ecx,edx}
         '''
 
         readSet = set([])
@@ -62,29 +77,19 @@ class RegisterAllocator(object):
 
         # ... and compute the sets excluding literal values
         if isinstance(instr, x86Neg):
-            self.addToSet(readSet, instr.op)
-            self.addToSet(writeSet, instr.op)
+            self.__addToSet(readSet, instr.op)
+            self.__addToSet(writeSet, instr.op)
         elif isinstance(instr, x86Pop):
-            self.addToSet(readSet, '%esp')
-            self.addToSet(writeSet, '%esp')
-            self.addToSet(writeSet, instr.op)
+            self.__addToSet(writeSet, instr.op)
         elif isinstance(instr, x86Push):
-            self.addToSet(readSet, instr.op)
-            self.addToSet(readSet, '%esp')
-            self.addToSet(writeSet, '%esp')
-
+            self.__addToSet(readSet, instr.op)
         elif isinstance(instr, x86Add) or isinstance(instr, x86Sub):
-            self.addToSet(readSet, instr.lhs)
-            self.addToSet(readSet, instr.rhs)
-            self.addToSet(writeSet, instr.rhs)
+            self.__addToSet(readSet, instr.lhs)
+            self.__addToSet(readSet, instr.rhs)
+            self.__addToSet(writeSet, instr.rhs)
         elif isinstance(instr, x86Mov):
-            self.addToSet(readSet, instr.lhs)
-            self.addToSet(writeSet, instr.rhs)
-
-        elif isinstance(instr, x86Call) or isinstance(instr, x86CallPtr):
-            self.addToSet(writeSet, '%eax')
-            self.addToSet(writeSet, '%ecx')
-            self.addToSet(writeSet, '%edx')
+            self.__addToSet(readSet, instr.lhs)
+            self.__addToSet(writeSet, instr.rhs)
 
         # compute the live set using algorithm above
         if self.debug >= 3:
@@ -95,28 +100,85 @@ class RegisterAllocator(object):
         self.afterLiveSet = self.beforeLiveSet
 
     def updateGraph(self, instr):
-        if self.debug >= 2:
+        if self.debug >= 3:
             print "for instruction ->{}<-\tthe live set is ->{}<-".format(instr, self.afterLiveSet)
 
         # If instruction I_k is a move: movl s, t, then add the edge (t, v)
         # for every v in L_after(k) unless v = t or v = s.
         if isinstance(instr, x86Mov):
-            print "got mov"
+            for node in self.afterLiveSet:
+                if instr.lhs != node and instr.rhs != node:
+                    if self.debug >= 2:
+                        print "adding arc ({}, {})".format(instr.rhs, node)
+                    self.interferenceGraph.addArc(instr.rhs, node)
 
         # If instruction I_k is not a move but some other arithmetic instruction
         # such as addl s, t, then add the edge (t, v) for every
         # v in L_after(k) unless v = t.
         if isinstance(instr, x86Add) or isinstance(instr, x86Sub):
-            print "got arith"
+            for node in self.afterLiveSet:
+                if instr.rhs != node:
+                    if self.debug >= 2:
+                        print "adding arc ({}, {})".format(instr.rhs, node)
+                    self.interferenceGraph.addArc(instr.rhs, node)
 
         # If instruction I_k is of the form call label, then add an edge
         # (r, v) for every caller-save register r and every variable v in
         # L_after(k). (The caller-save registers are eax, ecx, and edx.)
         if isinstance(instr, x86Call) or isinstance(instr, x86CallPtr):
-            print "got add"
-            
+            for node in self.afterLiveSet:
+                if self.debug >= 2:
+                    print "adding arc ({}, {})".format(set(['%eax','%ecx','%edx']), node)
+                self.interferenceGraph.addArc('%eax', node)
+                self.interferenceGraph.addArc('%ecx', node)
+                self.interferenceGraph.addArc('%edx', node)
 
-    def addToSet(self, aSet, value):
+    def __addToSet(self, aSet, value):
         if False == value.startswith('$'):
             aSet.add(value)
+
+    def detectSpills(self, instructions):
+        for instr in instructions:
+            if isinstance(instr, x86TwoOpInstruction):
+                if 'ebp' in instr.lhs and 'ebp' in instr.rhs:
+                    print "FOUND SPILL"
+        return False
+
+    def removeTrivials(self, instructions):
+        newInstructions = deque()
+
+        for instr in instructions:
+            if isinstance(instr, x86Mov):
+                if instr.lhs != instr.rhs:
+                    newInstructions.append(instr)
+            else:
+                newInstructions.append(instr)
+
+        return newInstructions
+
+    def assignHomes(self, instructions, graph):
+        for instr in instructions:
+            if self.debug >= 2:
+                print "processing instruction {}".format(instr)
+
+            # ... not sure if I should have to do this
+            for key, value in graph.items():
+                if key.startswith('%'):
+                    continue
+
+                if isinstance(instr, x86OneOpInstruction):
+                    if instr.op == key:
+                        if self.debug >= 2:
+                            print "\tOne op:  assigning {} to {}".format(instr.op, value)
+                        instr.op = value
+
+                if isinstance(instr, x86TwoOpInstruction):
+                    if instr.rhs == key:
+                        if self.debug >= 2:
+                            print "\tTwo op:  assigning {} to {}".format(instr.rhs, value)
+                        instr.rhs = value
+                    if instr.lhs == key:
+                        if self.debug >= 2:
+                            print "\tTwo op:  assigning {} to {}".format(instr.lhs, value)
+                        instr.lhs = value
 
