@@ -515,6 +515,185 @@ class ASTourist(object):
             except AttributeError:
                 break
 
+    def flatten(self):
+        pyIR = deque()
+        if self.debug >= 1:
+            print self.stk
+        act = x86Activation("main")
+        varCount = 0
+        symTable = dict()
+        tmp = '___t'
+        while self.stk:
+            t = self.stk[0]
+            quad = Quad()
+            # ----------------Termination statements *reset temp vars----------- #
+            if t == 'discard':
+                # no need to instatiate a new quad
+                # bc it is discarded
+                quad.op = self.stk.popleft()
+                quad.arg1 = self.stk.pop()
+                if self.debug >= 1:
+                    print quad.toString()
+                # varCount = 0  # temp vars no longer needed so we reset to t0
+            elif t == 'OP_ASSIGN':  # assignment operator
+                quad.op = self.stk.popleft()
+                quad.result = self.stk.pop()
+                quad.arg1 = self.stk.pop()
+                if self.debug >= 1:
+                    print quad.toString()
+                symTable[quad.result] = self.getNextRegTemp()
+          
+                # varCount = 0  # temp vars no longer needed so we reset to t0
+                pyIR.append(quad)
+                varCount += 1
+            elif t == 'printnl':
+                quad.op = self.stk.popleft()
+                quad.arg1 = self.stk.pop()
+                if self.debug >= 1:
+                    print quad.toString()
+                pyIR.append(quad)
+                # varCount = 0  # temp vars no longer needed so we reset to t0
+
+            # ------Function call arg1 = function name arg2 = [,params]--- #
+            elif t == 'callFunc':
+                quad.op = self.stk.popleft()
+                quad.arg1 = self.stk.pop()
+                quad.result = self.getNextTemp()
+                self.stk.appendleft(quad.result)
+                if self.debug >= 1:
+                    print quad.toString()
+                varCount += 1
+                pyIR.append(quad)
+            # ------------Binary operations (+, -, *, /)------------------#
+            elif t == '+':
+                qd2 = Quad()
+                qd2.op = 'OP_ASSIGN'
+                quad.op = self.stk.popleft()
+                quad.arg2 = self.stk.pop()
+                quad.arg1 = self.stk.pop()
+                quad.result = self.getNextTemp()
+                if self.debug >= 1:
+                    print quad.toString()
+                symTable[quad.result] = self.getNextRegTemp()
+                self.stk.appendleft(quad.result)
+                #
+                qd2.arg1 = quad.arg2
+                qd2.result = quad.result
+                quad.arg2 = qd2.result
+                varCount += 1
+                pyIR.append(qd2)
+                pyIR.append(quad)
+
+            # ---------------Unary operations (pos, neg, ....)-------------#
+            elif t == '(-)':
+                quad.op = self.stk.popleft()
+                quad.arg1 = self.stk.pop()
+                quad.result = self.getNextTemp()
+                if self.debug >= 1:
+                    print quad.toString()
+                symTable[quad.result] = self.getNextRegTemp()
+                self.stk.appendleft(quad.result)
+
+                varCount += 1
+                pyIR.append(quad)
+            else:
+                self.stk.rotate(-1)
+
+        if self.debug >= 1:
+            print 'symTable:\n',symTable
+            for q in pyIR:
+                print q.toString()
+        self.toPythonIR(pyIR)
+    
+    def toPythonIR(self, q):
+        # for qd in q:
+        #     print qd.toString()
+        # q.appendleft('mrk')
+        # e = q.pop()
+        # while e != 'mrk':
+        #     if 'OP_ASSIGN' == e.op and str(e.arg1).startswith('_'):
+        #         '''
+        #         We can simplify
+        #         '''
+        #         e2 = q.pop()
+        #         while e.arg1 == e2.result:
+                    
+        #             if e2.op == 'OP_ASSIGN':
+        #                 # we can replace left side
+        #                 e2.result = e.result
+        #                 q.appendleft(e2)
+        #                 e2 = q.pop()
+        #             elif e2.op == '+':
+        #                 # replace left and arg2
+        #                 e2.result = e.result
+        #                 e2.arg2   = e.result
+        #                 q.appendleft(e2)
+        #                 e2 = q.pop()
+        #             elif e2.op == '(-)':
+        #                 q.appendleft(e2)
+        #                 e2 = q.pop()
+        #             q.appendleft(e2)
+
+        #         q.append(e2)
+                    
+        #     else:
+        #         q.appendleft(e)
+        #     e = q.pop()
+
+        self.x86IR(q)
+        # for qd in q:
+        #     print qd.toString()
+
+    def x86IR(self, q):
+        act = x86Activation("main")
+
+        while q:
+            py = q.popleft()
+
+            if py.op == 'discard':
+                pass
+
+            if py.op == 'OP_ASSIGN':
+                if isinstance(py.arg1, int):
+                    src = '$' + str(py.arg1)
+                else:
+                    src = py.arg1
+                act.addInstruction(x86Mov(src, py.result))
+            
+            elif py.op == 'printnl':
+                if isinstance(py.arg1, int):
+                    src = '$' + str(py.arg1)
+                else:
+                    src = py.arg1
+                act.addInstruction(x86Push(src))
+                # call print_int_nl
+                act.addInstruction(x86Call("print_int_nl"))
+
+            elif py.op == 'callFunc':
+                act.addInstruction(x86Call(py.arg1))
+                # movl %eax, -X(%ebp)
+                act.addInstruction(x86Mov('%eax', py.result))
+            elif py.op == '+':
+                if isinstance(py.arg1, int):
+                    src = '$' + str(py.arg1)
+                else:
+                    src = py.arg1
+                act.addInstruction(x86Add(src, py.result))
+            elif py.op == '(-)':
+                if isinstance(py.arg1, int):
+                    src = '$' + str(py.arg1)
+                else:
+                    src = py.arg1
+                act.addInstruction(x86Mov(src, py.result))
+                act.addInstruction(x86Neg(py.result))
+            
+        act.setNumVars(0) #for spill code
+        self.x86ast.addRecord(act)
+
+
+
+
+
     def toInterCode(self):
         if self.debug >= 1:
             print self.stk
@@ -576,6 +755,7 @@ class ASTourist(object):
                 # call print_int_nl
                 act.addInstruction(x86Call("print_int_nl"))
                 # pop the stack 
+                ############################REMOVE Redundent
                 act.addInstruction(x86Add("$4", "%esp"))
                 # ---- end meta print ---- #
 
@@ -651,15 +831,16 @@ class ASTourist(object):
                     act.addInstruction(x86Mov(src, symTable[quad.result]))
                 # finally we add: negl -X(%ebp)
                 act.addInstruction(x86Neg(symTable[quad.result]))
-                # end to x86
+                # end to x86'''
                 varCount += 1
             else:
                 self.stk.rotate(-1)
 
         act.setNumVars(varCount)
         self.x86ast.addRecord(act)
+        
         if self.debug >= 1:
-            print symTable
+            print 'symTable:\n',symTable
 
     def renderAssembly(self, stdout=False):
         fd = None
@@ -686,6 +867,10 @@ if __name__ == "__main__":
         raise SystemExit(1)
     try:
         tree = compiler.parseFile(sys.argv[1])
+        visitor = ASTourist(outFile, debug=0)
+        compiler.walk(tree, visitor, walker=ASTVisitor())
+        visitor.breadth()
+        visitor.flatten()
     except IOError as e:
         print 'Unable to open %s: %s' % (sys.argv[1], e)
     except:
