@@ -149,7 +149,8 @@ class RegisterAllocator(object):
 
     def __addToSet(self, aSet, value):
         if False == value.startswith('$'):
-            aSet.add(value)
+            if False == value.startswith('%'):
+                aSet.add(value)
 
     def __addToGraph(self, node):
          if False == node.startswith('%') and False == node.startswith('$'):
