@@ -673,6 +673,7 @@ class ASTourist(object):
                 act.addInstruction(x86Push(src))
                 # call print_int_nl
                 act.addInstruction(x86Call("print_int_nl"))
+                act.addInstruction(x86Add("$4", "%esp"))
 
             elif py.op == 'callFunc':
                 act.addInstruction(x86Call(py.arg1))
