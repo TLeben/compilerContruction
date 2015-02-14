@@ -109,7 +109,7 @@ class RegisterAllocator(object):
             for node in self.afterLiveSet:
                 if instr.lhs != node and instr.rhs != node:
                     if self.debug >= 2:
-                        print "adding arc ({}, {})".format(instr.rhs, node)
+                        print "Mov: adding arc ({}, {})".format(instr.rhs, node)
                     self.interferenceGraph.addArc(instr.rhs, node)
 
         # If instruction I_k is not a move but some other arithmetic instruction
@@ -119,7 +119,7 @@ class RegisterAllocator(object):
             for node in self.afterLiveSet:
                 if instr.rhs != node:
                     if self.debug >= 2:
-                        print "adding arc ({}, {})".format(instr.rhs, node)
+                        print "Add: adding arc ({}, {})".format(instr.rhs, node)
                     self.interferenceGraph.addArc(instr.rhs, node)
 
         # If instruction I_k is of the form call label, then add an edge
@@ -132,10 +132,15 @@ class RegisterAllocator(object):
                 self.interferenceGraph.addArc('%eax', node)
                 self.interferenceGraph.addArc('%ecx', node)
                 self.interferenceGraph.addArc('%edx', node)
+            
 
     def __addToSet(self, aSet, value):
         if False == value.startswith('$'):
-            aSet.add(value)
+            ############added this line bc I cant figure out why register names 
+            ## are being added to the graph. Only variables should be added to the graph
+            # the register names are the colors/domains.
+            if False == value.startswith('%'):
+                aSet.add(value)
 
     def detectSpills(self, instructions):
         for instr in instructions:

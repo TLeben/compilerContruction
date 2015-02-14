@@ -534,6 +534,7 @@ class ASTourist(object):
                 quad.arg1 = self.stk.pop()
                 if self.debug >= 1:
                     print quad.toString()
+                pyIR.append(quad)
                 # varCount = 0  # temp vars no longer needed so we reset to t0
             elif t == 'OP_ASSIGN':  # assignment operator
                 quad.op = self.stk.popleft()
@@ -653,7 +654,7 @@ class ASTourist(object):
             if py.op == 'discard':
                 pass
 
-            if py.op == 'OP_ASSIGN':
+            elif py.op == 'OP_ASSIGN':
                 if isinstance(py.arg1, int):
                     src = '$' + str(py.arg1)
                 else:

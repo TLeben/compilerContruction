@@ -37,6 +37,7 @@ class Graph(object):
         self.domains = dict()  # {variable: [possible domains]}
         self.final = dict()  # {variable: single domain}
         self.currDomains = None   # {variable: [working list of domains]}
+        self.ptr=0
     
     def addNode(self, nodeName):
         '''
