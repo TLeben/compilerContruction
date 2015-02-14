@@ -39,7 +39,11 @@ class RegisterAllocator(object):
                 # now color the graph
                 graph = self.interferenceGraph.colorGraph()
                 if self.debug >= 2:
-                    print graph
+                    print "\n{}\n".format(graph)
+
+                if isinstance(graph, tuple) and False == graph[0]:
+                    print "graph coloring failed!"
+                    return
 
                 # generate spill code
                 foundHomes = not self.detectSpills(instructions)
@@ -106,6 +110,9 @@ class RegisterAllocator(object):
         # If instruction I_k is a move: movl s, t, then add the edge (t, v)
         # for every v in L_after(k) unless v = t or v = s.
         if isinstance(instr, x86Mov):
+            self.__addToGraph(instr.lhs)
+            self.__addToGraph(instr.rhs)
+
             for node in self.afterLiveSet:
                 if instr.lhs != node and instr.rhs != node:
                     if self.debug >= 2:
@@ -115,7 +122,10 @@ class RegisterAllocator(object):
         # If instruction I_k is not a move but some other arithmetic instruction
         # such as addl s, t, then add the edge (t, v) for every
         # v in L_after(k) unless v = t.
-        if isinstance(instr, x86Add) or isinstance(instr, x86Sub):
+        elif isinstance(instr, x86Add) or isinstance(instr, x86Sub):
+            self.__addToGraph(instr.lhs)
+            self.__addToGraph(instr.rhs)
+
             for node in self.afterLiveSet:
                 if instr.rhs != node:
                     if self.debug >= 2:
@@ -125,28 +135,39 @@ class RegisterAllocator(object):
         # If instruction I_k is of the form call label, then add an edge
         # (r, v) for every caller-save register r and every variable v in
         # L_after(k). (The caller-save registers are eax, ecx, and edx.)
-        if isinstance(instr, x86Call) or isinstance(instr, x86CallPtr):
-            for node in self.afterLiveSet:
-                if self.debug >= 2:
-                    print "adding arc ({}, {})".format(set(['%eax','%ecx','%edx']), node)
-                self.interferenceGraph.addArc('%eax', node)
-                self.interferenceGraph.addArc('%ecx', node)
-                self.interferenceGraph.addArc('%edx', node)
-            
+#        elif isinstance(instr, x86Call) or isinstance(instr, x86CallPtr):
+#            for node in self.afterLiveSet:
+#                if self.debug >= 2:
+#                    print "adding arc ({}, {})".format(set(['%eax','%ecx','%edx']), node)
+#                self.interferenceGraph.addArc('%eax', node)
+#                self.interferenceGraph.addArc('%ecx', node)
+#                self.interferenceGraph.addArc('%edx', node)
+
 
     def __addToSet(self, aSet, value):
         if False == value.startswith('$'):
-            ############added this line bc I cant figure out why register names 
-            ## are being added to the graph. Only variables should be added to the graph
-            # the register names are the colors/domains.
-            if False == value.startswith('%'):
-                aSet.add(value)
+            aSet.add(value)
+
+    def __addToGraph(self, node):
+         if False == node.startswith('%') and False == node.startswith('$'):
+            if self.debug >= 2:
+                print "adding node {}".format(node)
+            self.interferenceGraph.addNode(node)
 
     def detectSpills(self, instructions):
+        newInstructions = deque()
+
         for instr in instructions:
             if isinstance(instr, x86TwoOpInstruction):
                 if 'ebp' in instr.lhs and 'ebp' in instr.rhs:
-                    print "FOUND SPILL"
+                    if self.debug >= 2:
+                        print "FOUND SPILL {}".format(instr)
+                    newTemp = self.visitor.getNextTemp()
+                    newInstructions.append(x86Mov(instr.lhs, newTemp))
+                    newInstructions.append(x86Mov(newTemp, instr.rhs))
+            else:
+                newInstructions.append(instr)
+
         return False
 
     def removeTrivials(self, instructions):
@@ -162,15 +183,15 @@ class RegisterAllocator(object):
         return newInstructions
 
     def assignHomes(self, instructions, graph):
+        if 0 == len(graph.items()):
+            return
+
         for instr in instructions:
             if self.debug >= 2:
                 print "processing instruction {}".format(instr)
 
             # ... not sure if I should have to do this
             for key, value in graph.items():
-                if key.startswith('%'):
-                    continue
-
                 if isinstance(instr, x86OneOpInstruction):
                     if instr.op == key:
                         if self.debug >= 2:
