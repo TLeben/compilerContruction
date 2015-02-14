@@ -28,8 +28,8 @@ class RegisterAllocator(object):
         for rec in self.visitor.x86ast.records:
             instructions = rec.instructions
 
-            foundHomes = False
-            while False == foundHomes:
+            allocated = False
+            while False == allocated:
                 # ... iterate through the instructions in reverse order
                 # (this does not include the preamble, stack allocation, or postamble - including return value)
                 for instr in reversed(instructions):
@@ -43,10 +43,13 @@ class RegisterAllocator(object):
 
                 if isinstance(graph, tuple) and False == graph[0]:
                     print "graph coloring failed!"
-                    return
+                    allocated = False
+                    graph = graph[1]
+                else:
+                    allocated = True
 
                 # generate spill code
-                foundHomes = not self.detectSpills(instructions)
+                allocated = not self.detectSpills(instructions)
 
             # remove trivial moves
             newInstructions = self.removeTrivials(instructions)
@@ -156,6 +159,7 @@ class RegisterAllocator(object):
 
     def detectSpills(self, instructions):
         newInstructions = deque()
+        foundSpill = False
 
         for instr in instructions:
             if isinstance(instr, x86TwoOpInstruction):
@@ -165,10 +169,11 @@ class RegisterAllocator(object):
                     newTemp = self.visitor.getNextTemp()
                     newInstructions.append(x86Mov(instr.lhs, newTemp))
                     newInstructions.append(x86Mov(newTemp, instr.rhs))
+                    foundSpill = True
             else:
                 newInstructions.append(instr)
 
-        return False
+        return foundSpill
 
     def removeTrivials(self, instructions):
         newInstructions = deque()
