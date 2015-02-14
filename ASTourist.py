@@ -616,29 +616,32 @@ class ASTourist(object):
             Cleans up obvious un-needed moves
         '''
 
-        # vprop = None
-        # vtest = '~~~~~~~~~~~~~~~~~~~~~~'
-        # rmvs = []
-        # for x in xrange(len(q)-1, -1, -1):
-        #     if q[x].result == vtest:
-        #         q[x].result = vprop
+        vprop = None
+        vtest = '~~~~~~~~~~~~~~~~~~~~~~'
+        rmvs = []
+        for x in xrange(len(q)-1, -1, -1):
+            if q[x].result == vtest:
+                q[x].result = vprop
 
-        #         if q[x].arg2 == vtest:
-        #             q[x].arg2 = vprop
-        #     elif q[x].op is 'OP_ASSIGN':
-        #         vprop = q[x].result
-        #         vtest = q[x].arg1
-        #         rmvs.append(x)
-        #     else:
-        #         vprop = None
-        #         vtest = '~~~~~~~~~~~~~~~~~~~~~~'
-        # for r in rmvs:
-        #     q.remove(q[r])
+                if q[x].arg2 == vtest:
+                    q[x].arg2 = vprop
+            elif q[x].op is 'OP_ASSIGN':
+                vprop = q[x].result
+                vtest = q[x].arg1
+                rmvs.append(x)
+            else:
+                vprop = None
+                vtest = '~~~~~~~~~~~~~~~~~~~~~~'
+        for r in rmvs:
+            if isinstance (q[r].arg1, int):
+                pass
+            else:
+                q.remove(q[r])
                           
-        # if self.debug >=1:
-        #     print '--------------toPythonIR() results-----------'
-        #     for ex in q:
-        #         print ex.toString()
+        if self.debug >=1:
+            print '--------------toPythonIR() results-----------'
+            for ex in q:
+                print ex.toString()
 
         
 
@@ -693,7 +696,7 @@ class ASTourist(object):
                 act.addInstruction(x86Mov(src, py.result))
                 act.addInstruction(x86Neg(py.result))
             
-        act.setNumVars(0) #for stack
+        act.setNumVars(4) #for stack
         self.x86ast.addRecord(act)
 
 
