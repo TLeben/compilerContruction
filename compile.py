@@ -56,7 +56,6 @@ if __name__ == "__main__":
         visitor.toInterCode()
 
         if DEBUG >= 1:
-            print "DEBUG:  before register allocation"
             print "------------------------------------------"
             visitor.renderAssembly(stdout=True)
             print "------------------------------------------"
@@ -67,7 +66,6 @@ if __name__ == "__main__":
 
         # generate final x86 assembly
         if DEBUG >= 1:
-            print "DEBUG:  after register allocation"
             print "------------------------------------------"
             visitor.renderAssembly(stdout=True)
             print "------------------------------------------"
