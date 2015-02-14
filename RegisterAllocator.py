@@ -153,13 +153,13 @@ class RegisterAllocator(object):
         # If instruction I_k is of the form call label, then add an edge
         # (r, v) for every caller-save register r and every variable v in
         # L_after(k). (The caller-save registers are eax, ecx, and edx.)
-#        elif isinstance(instr, x86Call) or isinstance(instr, x86CallPtr):
-#            for node in self.afterLiveSet:
-#                if self.debug >= 2:
-#                    print "adding arc ({}, {})".format(set(['%eax','%ecx','%edx']), node)
-#                self.interferenceGraph.addArc('%eax', node)
-#                self.interferenceGraph.addArc('%ecx', node)
-#                self.interferenceGraph.addArc('%edx', node)
+        elif isinstance(instr, x86Call) or isinstance(instr, x86CallPtr):
+            for node in self.afterLiveSet:
+                if self.debug >= 2:
+                    print "adding arc ({}, {})".format(set(['%eax','%ecx','%edx']), node)
+                self.interferenceGraph.addArc('%eax', node)
+                self.interferenceGraph.addArc('%ecx', node)
+                self.interferenceGraph.addArc('%edx', node)
 
 
     def __addToSet(self, aSet, value):
