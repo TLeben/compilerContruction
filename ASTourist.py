@@ -518,7 +518,7 @@ class ASTourist(object):
     def flatten(self):
         pyIR = deque()
         if self.debug >= 1:
-            print self.stk
+            print 'flatten stk',self.stk
         act = x86Activation("main")
         varCount = 0
         symTable = dict()
