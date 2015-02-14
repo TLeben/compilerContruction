@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-'''
-@TODO: Compute interference graph
-@TODO: Color the interference graph
-@TODO: Generate spill code
-'''
-
 from ASTourist import *
 from x86AST import *
 from InterferenceGraph import *
@@ -13,7 +7,16 @@ from InterferenceGraph import *
 class RegisterAllocator(object):
 
     '''
-    Class that will peform liveness analysis and assign registers
+    Class that will implement most of the register allocation
+        1. LOOP
+            1. Perform liveness analysis
+            2. Add nodes / edges to interference graph
+            3. Delegate coloring to InterferenceGraph
+            4. Detect spills and add instructions to handle
+            5. If spills, return to step 1. otherwise exit loop
+
+        3. Remove trivial instructions (movl a, a)
+        2. Assign temporary variables registers
     '''
 
     def __init__(self, visitor, debug=0):
@@ -38,6 +41,15 @@ class RegisterAllocator(object):
 
                 # now color the graph
                 graph = self.interferenceGraph.colorGraph()
+
+#                graph = {}
+#                graph['___z0'] = '%ebx'
+#                graph['___z1'] = '%ecx'
+#                graph['___z2'] = '-4(%ebp)'
+#                graph['x'] = '-8(%ebp)'
+#                graph['y'] = '%ecx'
+#                graph['z'] = '%ebx'
+
                 if self.debug >= 2:
                     print "\n{}\n".format(graph)
 
@@ -49,7 +61,9 @@ class RegisterAllocator(object):
                     allocated = True
 
                 # generate spill code
-                allocated = not self.detectSpills(instructions)
+                args = list(self.detectSpills(instructions, graph))
+                allocated = not args[0]
+                instructions = args[1]
 
             # remove trivial moves
             newInstructions = self.removeTrivials(instructions)
@@ -110,6 +124,7 @@ class RegisterAllocator(object):
         if self.debug >= 3:
             print "for instruction ->{}<-\tthe live set is ->{}<-".format(instr, self.afterLiveSet)
 
+        
         # If instruction I_k is a move: movl s, t, then add the edge (t, v)
         # for every v in L_after(k) unless v = t or v = s.
         if isinstance(instr, x86Mov):
@@ -156,25 +171,25 @@ class RegisterAllocator(object):
          if False == node.startswith('%') and False == node.startswith('$'):
             if self.debug >= 2:
                 print "adding node {}".format(node)
-            self.interferenceGraph.addNode(node)
+            self.interferenceGraph.addArc(node)
 
-    def detectSpills(self, instructions):
+    def detectSpills(self, instructions, graph):
+        self.assignHomes(instructions, graph)
         newInstructions = deque()
         foundSpill = False
 
         for instr in instructions:
-            if isinstance(instr, x86TwoOpInstruction):
-                if 'ebp' in instr.lhs and 'ebp' in instr.rhs:
-                    if self.debug >= 2:
-                        print "FOUND SPILL {}".format(instr)
-                    newTemp = self.visitor.getNextTemp()
-                    newInstructions.append(x86Mov(instr.lhs, newTemp))
-                    newInstructions.append(x86Mov(newTemp, instr.rhs))
-                    foundSpill = True
+            if isinstance(instr, x86TwoOpInstruction) and '%ebp' in instr.lhs and '%ebp' in instr.rhs:
+                if self.debug >= 2:
+                    print "FOUND SPILL {}".format(instr)
+                newTemp = self.visitor.getNextTemp()
+                newInstructions.append(x86Mov(instr.lhs, newTemp))
+                newInstructions.append(x86Mov(newTemp, instr.rhs))
+                foundSpill = True
             else:
                 newInstructions.append(instr)
 
-        return foundSpill
+        return (foundSpill, newInstructions)
 
     def removeTrivials(self, instructions):
         newInstructions = deque()
