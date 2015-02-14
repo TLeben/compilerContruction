@@ -47,14 +47,16 @@ class Graph(object):
             self.neighbors[nodeName] = set([])
             self.domains[nodeName] = self.values
             self.vars.append(nodeName)
+            self.addArc(nodeName)
             return True
         return False
 
-    def addArc(self, u, v):
+    def addArc(self, u, v=None):
         '''
         u is a start node and v a set/list of vertices or a single vertex
         '''
-
+        if v is None:
+            v = u
         if u not in self.vars:
             self.addNode(u)
         if isinstance(v, list):  # v is a list []
@@ -274,6 +276,9 @@ class Graph(object):
             if len(assignment) == len(self.vars):
                 return assignment
             var = varSelect(self, assignment)
+            ##dirty code
+
+            ###
             for value in domainSort(self, var, assignment):
                 if 0 == self.numConflicts(var, value, assignment):
                     self.assign(var, value, assignment)
@@ -312,6 +317,7 @@ if __name__ == '__main__':
     #~~~~~~Testing~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     g = Graph()
     g.addNode('a')
+    g.addArc('a')
     g.addArc('a', 'b')
     g.addArc('d', set(['a', 'b', 'c']))
     g.addArc('d', set(['b', 'c', 'e', 'f']))
@@ -319,6 +325,7 @@ if __name__ == '__main__':
     g.addArc('c', set(['e', 'd', 'b']))
     g.addArc('e', set(['d', 'f']))
     g.addArc('f', set(['d', 'e']))
+    g.addArc('g')
     
     print g.colorGraph()
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -60,6 +60,7 @@ class ASTourist(object):
         self.outFile = outFile
         self.debug = debug
         self.stk = deque()
+        self.symTable = dict()
         self.stk.append('mkr')  # marks end of deque
         self.x86ast = x86AST()
         self.tmpCounter = 0
@@ -521,7 +522,7 @@ class ASTourist(object):
             print 'flatten stk',self.stk
         act = x86Activation("main")
         varCount = 0
-        symTable = dict()
+        self.symTable = dict()
         tmp = '___t'
         while self.stk:
             t = self.stk[0]
@@ -542,7 +543,7 @@ class ASTourist(object):
                 quad.arg1 = self.stk.pop()
                 if self.debug >= 1:
                     print quad.toString()
-                symTable[quad.result] = self.getNextRegTemp()
+                self.symTable[quad.result] = self.getNextRegTemp()
           
                 # varCount = 0  # temp vars no longer needed so we reset to t0
                 pyIR.append(quad)
@@ -575,7 +576,7 @@ class ASTourist(object):
                 quad.result = self.getNextTemp()
                 if self.debug >= 1:
                     print quad.toString()
-                symTable[quad.result] = self.getNextRegTemp()
+                self.symTable[quad.result] = self.getNextRegTemp()
                 self.stk.appendleft(quad.result)
                 #
                 qd2.arg1 = quad.arg2
@@ -592,7 +593,7 @@ class ASTourist(object):
                 quad.result = self.getNextTemp()
                 if self.debug >= 1:
                     print quad.toString()
-                symTable[quad.result] = self.getNextRegTemp()
+                self.symTable[quad.result] = self.getNextRegTemp()
                 self.stk.appendleft(quad.result)
 
                 varCount += 1
@@ -601,51 +602,54 @@ class ASTourist(object):
                 self.stk.rotate(-1)
 
         if self.debug >= 1:
-            print 'symTable:\n',symTable
+            print '--------------symTable--------------------'
+            print 'symTable:\n',self.symTable,'\n'
+        
+            print '--------------flatten() results-----------'
             for q in pyIR:
                 print q.toString()
+        
         self.toPythonIR(pyIR)
     
     def toPythonIR(self, q):
-        # for qd in q:
-        #     print qd.toString()
-        # q.appendleft('mrk')
-        # e = q.pop()
-        # while e != 'mrk':
-        #     if 'OP_ASSIGN' == e.op and str(e.arg1).startswith('_'):
-        #         '''
-        #         We can simplify
-        #         '''
-        #         e2 = q.pop()
-        #         while e.arg1 == e2.result:
-                    
-        #             if e2.op == 'OP_ASSIGN':
-        #                 # we can replace left side
-        #                 e2.result = e.result
-        #                 q.appendleft(e2)
-        #                 e2 = q.pop()
-        #             elif e2.op == '+':
-        #                 # replace left and arg2
-        #                 e2.result = e.result
-        #                 e2.arg2   = e.result
-        #                 q.appendleft(e2)
-        #                 e2 = q.pop()
-        #             elif e2.op == '(-)':
-        #                 q.appendleft(e2)
-        #                 e2 = q.pop()
-        #             q.appendleft(e2)
+        '''
+            Cleans up obvious un-needed moves
+        '''
 
-        #         q.append(e2)
-                    
-        #     else:
-        #         q.appendleft(e)
-        #     e = q.pop()
+        vprop = None
+        vtest = '~~~~~~~~~~~~~~~~~~~~~~'
+        rmvs = []
+        for x in xrange(len(q)-1, -1, -1):
+            if q[x].result == vtest:
+                q[x].result = vprop
 
-        self.x86IR(q)
+                if q[x].arg2 == vtest:
+                    q[x].arg2 = vprop
+            elif q[x].op is 'OP_ASSIGN':
+                vprop = q[x].result
+                vtest = q[x].arg1
+                rmvs.append(x)
+            else:
+                vprop = None
+                vtest = '~~~~~~~~~~~~~~~~~~~~~~'
+        for r in rmvs:
+            q.remove(q[r])
+                          
+        if self.debug >=1:
+            print '--------------toPythonIR() results-----------'
+            for ex in q:
+                print ex.toString()
+
+        
+
+        self.x86IR(q) # select our instuctions
         # for qd in q:
         #     print qd.toString()
 
     def x86IR(self, q):
+        '''
+        select our instructions based on Quad objects from flatten
+        '''
         act = x86Activation("main")
 
         while q:
@@ -688,13 +692,14 @@ class ASTourist(object):
                 act.addInstruction(x86Mov(src, py.result))
                 act.addInstruction(x86Neg(py.result))
             
-        act.setNumVars(0) #for spill code
+        act.setNumVars(0) #for stack
         self.x86ast.addRecord(act)
 
 
 
 
-
+    # toInterCode is depreciated,
+    # code is left here to for reference use flatten() instead
     def toInterCode(self):
         if self.debug >= 1:
             print self.stk
@@ -841,7 +846,9 @@ class ASTourist(object):
         self.x86ast.addRecord(act)
         
         if self.debug >= 1:
+            print '------------------------------------------'
             print 'symTable:\n',symTable
+            print '------------------------------------------'
 
     def renderAssembly(self, stdout=False):
         fd = None
