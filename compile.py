@@ -13,7 +13,7 @@ from subprocess import call
 # sys.path.append('hw2/ply-3.4')
 # from parse import Parser
 
-DEBUG = 0
+DEBUG = 2
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -53,8 +53,8 @@ if __name__ == "__main__":
         visitor.breadth()
 
         # x86 instruction selection
-        visitor.toInterCode()
-
+        # visitor.toInterCode()
+        visitor.flatten()
         if DEBUG >= 1:
             print "------------------------------------------"
             visitor.renderAssembly(stdout=True)
