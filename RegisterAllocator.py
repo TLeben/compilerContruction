@@ -3,6 +3,8 @@
 from ASTourist import *
 from x86AST import *
 from InterferenceGraph import *
+import time
+import copy
 
 class RegisterAllocator(object):
 
@@ -25,6 +27,7 @@ class RegisterAllocator(object):
         self.afterLiveSet = set([])
         self.beforeLiveSet = set([])
         self.interferenceGraph = Graph()
+        self.stackPos = 0
 
     def allocateRegisters(self):
         # for each activation record ...
@@ -36,6 +39,10 @@ class RegisterAllocator(object):
                 # ... iterate through the instructions in reverse order
                 # (this does not include the preamble, stack allocation, or postamble - including return value)
                 for instr in reversed(instructions):
+                    # ignore stack manipulation instructions
+                    if isinstance(instr, x86Add) and instr.rhs == '%esp':
+                        continue
+                    
                     self.computeLiveSet(instr)
                     self.updateGraph(instr)
 
@@ -46,7 +53,6 @@ class RegisterAllocator(object):
                     print "\n{}\n".format(graph)
 
                 if isinstance(graph, tuple) and False == graph[0]:
-                    print "graph coloring failed!"
                     allocated = False
                     graph = graph[1]
                 else:
@@ -57,14 +63,17 @@ class RegisterAllocator(object):
                 allocated = not args[0]
                 instructions = args[1]
 
+#                time.sleep(1)
+                allocated = True
+
             # remove trivial moves
-            newInstructions = self.removeTrivials(instructions)
+            instructions = self.removeTrivials(instructions)
 
             # assign homes
-            self.assignHomes(newInstructions, graph)
+            instructions = self.assignHomes(instructions, graph, True)
 
             # replace the instructions with the new set
-            rec.instructions = newInstructions
+            rec.instructions = instructions
 
     def computeLiveSet(self, instr):
         '''
@@ -166,20 +175,24 @@ class RegisterAllocator(object):
             self.interferenceGraph.addNode(node)
 
     def detectSpills(self, instructions, graph):
-        self.assignHomes(instructions, graph)
         newInstructions = deque()
+        homedInstructions = self.assignHomes(instructions, graph, False)
         foundSpill = False
 
-        for instr in instructions:
+        if 0 == len(homedInstructions):
+            return instructions
+
+        for instr in homedInstructions:
             if isinstance(instr, x86TwoOpInstruction) and '%ebp' in instr.lhs and '%ebp' in instr.rhs:
                 if self.debug >= 2:
                     print "FOUND SPILL {}".format(instr)
                 newTemp = self.visitor.getNextTemp()
                 newInstructions.append(x86Mov(instr.lhs, newTemp))
                 newInstructions.append(x86Mov(newTemp, instr.rhs))
+                instructions.popleft()
                 foundSpill = True
             else:
-                newInstructions.append(instr)
+                newInstructions.append(instructions.popleft())
 
         return (foundSpill, newInstructions)
 
@@ -195,15 +208,16 @@ class RegisterAllocator(object):
 
         return newInstructions
 
-    def assignHomes(self, instructions, graph):
+    def assignHomes(self, instructions, graph, remember):
         if 0 == len(graph.items()):
             return
 
-        for instr in instructions:
+        homedInstructions = copy.deepcopy(instructions)
+        # assign graph registers
+        for instr in homedInstructions:
             if self.debug >= 2:
                 print "processing instruction {}".format(instr)
 
-            # ... not sure if I should have to do this
             for key, value in graph.items():
                 if isinstance(instr, x86OneOpInstruction):
                     if instr.op == key:
@@ -216,8 +230,28 @@ class RegisterAllocator(object):
                         if self.debug >= 2:
                             print "\tTwo op:  assigning {} to {}".format(instr.rhs, value)
                         instr.rhs = value
+                    
                     if instr.lhs == key:
                         if self.debug >= 2:
                             print "\tTwo op:  assigning {} to {}".format(instr.lhs, value)
                         instr.lhs = value
+
+            # otherwise throw it on the stack
+            if isinstance(instr, x86Call) or isinstance(instr, x86CallPtr):
+                continue
+            if isinstance(instr, x86OneOpInstruction) and not instr.op.startswith('%') and not instr.op.startswith('$') and not instr.op.startswith('-'):
+                instr.op = self.getNextStackPos(remember)
+            if isinstance(instr, x86TwoOpInstruction) and not instr.lhs.startswith('%') and not instr.lhs.startswith('$') and not instr.lhs.startswith('-'):
+                instr.lhs = self.getNextStackPos(remember)
+            if isinstance(instr, x86TwoOpInstruction) and not instr.rhs.startswith('%') and not instr.rhs.startswith('$') and not instr.rhs.startswith('-'):
+                instr.rhs = self.getNextStackPos(remember)
+
+        return homedInstructions
+
+    def getNextStackPos(self, remember):
+        print "stack"
+        tmp = '-' + str((self.stackPos + 1) * 4) + '(%ebp)'
+        if remember:
+            self.stackPos += 1
+        return tmp
 

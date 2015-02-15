@@ -696,7 +696,6 @@ class ASTourist(object):
                 act.addInstruction(x86Mov(src, py.result))
                 act.addInstruction(x86Neg(py.result))
             
-        act.setNumVars(4) #for stack
         self.x86ast.addRecord(act)
 
 
@@ -846,7 +845,6 @@ class ASTourist(object):
             else:
                 self.stk.rotate(-1)
 
-        act.setNumVars(varCount)
         self.x86ast.addRecord(act)
         
         if self.debug >= 1:

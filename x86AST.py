@@ -112,15 +112,24 @@ class x86Activation(object):
     def addInstruction(self, instr=None):
         self.instructions.append(instr)
 
-    def setNumVars(self, numVars=0):
-        self.preamble.setNumVars(numVars)
-
     def prettyPrint(self, fd):
         # print the name of the function
         fd.write("{}:\n".format(self.name))
 
         # print preamble
         self.preamble.prettyPrint(fd)
+
+        # figure out the size of the stack
+        stack = set([])
+        for instr in self.instructions:
+            if isinstance(instr, x86OneOpInstruction) and '(%ebp)' in instr.op:
+                stack.add(instr.op)
+            elif isinstance(instr, x86TwoOpInstruction) and '(%ebp)' in instr.rhs:
+                stack.add(instr.rhs)
+            elif isinstance(instr, x86TwoOpInstruction) and '(%ebp)' in instr.lhs:
+                stack.add(instr.lhs)
+
+        x86Sub('$' + str(len(stack)), '%esp').prettyPrint(fd)
 
         # walk the list and print the instructions
         for instr in self.instructions:
@@ -139,23 +148,11 @@ class x86Preamble(object):
     '''
 
     def __init__(self):
-        self.numVars = 0
         self.instructions = deque()
 
         # these are always the first two instructions
         self.instructions.append(x86Push("%ebp"))
         self.instructions.append(x86Mov("%esp", "%ebp"))
-
-    def setNumVars(self, numVars=0):
-        if 0 != numVars:
-            # have we already allocated stack space?
-            if 0 != self.numVars:
-                # then remove the old allocation
-                self.instructions.pop()
-            else:
-                # allocate stack space
-                self.numVars = numVars
-                self.instructions.append(x86Sub("$" + str(self.numVars * 4), "%esp"))
 
     def prettyPrint(self, fd):
         for instr in self.instructions:
