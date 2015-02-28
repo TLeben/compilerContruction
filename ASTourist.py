@@ -42,7 +42,8 @@ class Quad(object):
             return 'print {}'.format(self.arg1)
         elif self.op == '(-)':
             return '{0} = - {1}'.format(self.result, self.arg1)
-        return "{0} = {1} {2} {3}".format(self.result, self.arg1, self.op, self.arg2)
+        ## if node
+        return "if {0} then {1} else {2}".format(self.op, self.arg1.toString(), self.arg2.toString(), self.result)
 
 
 class ASTourist(object):
@@ -73,9 +74,9 @@ class ASTourist(object):
 
     def getNextRegTemp(self):
         ## old code ##
-#        tmp = '-' + str((self.regCounter + 1) * 4) + "(%ebp)"
+       tmp = '-' + str((self.regCounter + 1) * 4) + "(%ebp)"
         ## new code ##
-        tmp = "___y" + str(self.regCounter)
+        #tmp = "___y" + str(self.regCounter)
 
         self.regCounter += 1
         return tmp
@@ -281,13 +282,24 @@ class ASTourist(object):
         # Global attributes
         # names
         raise NotImplementedException('visitGlobal')
-
-    def visitIf(self, node):
+    def visitIf(self,node):
         # If attributes
         # tests
-        #     else_
+        #     
         raise NotImplementedException('visitIf')
-
+    
+    def visitIfExp(self, node):
+        # If attributes
+        # tests
+        #     
+        # <then> if <test> else <else_>
+        self.stk.append(node.test)
+        # self.stk.append('then')
+        self.stk.append(node.then)
+        # self.stk.append('else')
+        self.stk.append(node.else_)
+        self.stk.append('ifExp')
+        
     def visitImport(self, node):
         # Import attributes
         # names
@@ -512,11 +524,16 @@ class ASTourist(object):
             n = self.stk.pop()
             try:
                 # dumps the marker ir error is raised
+                if n == 'ifExp':
+                    self.stk.appendleft(n)
+                    n = self.stk.pop()
+
                 walk(n, self)
             except AttributeError:
                 break
 
     def flatten(self):
+        print self.stk
         pyIR = deque()
         if self.debug >= 1:
             print 'flatten stk',self.stk
@@ -566,6 +583,43 @@ class ASTourist(object):
                     print quad.toString()
                 varCount += 1
                 pyIR.append(quad)
+            
+
+            # ------------ifExp-------------------------------------------#
+            elif t == 'ifExp':
+                # we have <then> if <test> else <else>
+                # so 3 parts
+                self.stk.popleft()
+                ##the else
+                qe = Quad()
+                qe.op = 'OP_ASSIGN'
+                qe.result = self.getNextTemp()
+                self.symTable[qe.result] = self.getNextRegTemp()
+                qe.arg1 = self.stk.pop()
+                # then
+                qb = Quad()
+                qb.op = 'OP_ASSIGN'
+                qb.result = qe.result
+                qb.arg1 = self.stk.pop()
+
+                quad.arg2   = qe
+                quad.arg1   = qb
+                # node for test assignment
+                qt         = Quad()
+                qt.op      = 'OP_ASSIGN'
+                qt.arg1    = self.stk.pop()
+                qt.result  = self.getNextTemp()
+                self.symTable[qt.result] = self.getNextRegTemp()
+                quad.op     = qt.result ## test for if nodes
+                quad.result = qe.result
+                # self.symTable[quad.result] = self.getNextRegTemp()
+
+                print quad.toString()
+
+                self.stk.appendleft(quad.result)
+                pyIR.append(qt)
+                pyIR.append(quad)
+            
             # ------------Binary operations (+, -, *, /)------------------#
             elif t == '+':
                 qd2 = Quad()
@@ -582,7 +636,7 @@ class ASTourist(object):
                 qd2.arg1 = quad.arg2
                 qd2.result = quad.result
                 quad.arg2 = qd2.result
-                varCount += 1
+                
                 pyIR.append(qd2)
                 pyIR.append(quad)
 
@@ -609,7 +663,7 @@ class ASTourist(object):
             for q in pyIR:
                 print q.toString()
         
-        self.toPythonIR(pyIR)
+        # self.toPythonIR(pyIR)
     
     def toPythonIR(self, q):
         '''
@@ -625,10 +679,12 @@ class ASTourist(object):
 
                 if q[x].arg2 == vtest:
                     q[x].arg2 = vprop
+                    
             elif q[x].op is 'OP_ASSIGN':
                 vprop = q[x].result
                 vtest = q[x].arg1
                 rmvs.append(x)
+
             else:
                 vprop = None
                 vtest = '~~~~~~~~~~~~~~~~~~~~~~'
@@ -637,6 +693,11 @@ class ASTourist(object):
                 pass
             else:
                 q.remove(q[r])
+                # try:
+                #     q[r].arg2.result = q[r].result
+                #     q[r].arg1.result = q[r].result
+                # except:
+                    # pass
                           
         if self.debug >=1:
             print '--------------toPythonIR() results-----------'
@@ -645,7 +706,7 @@ class ASTourist(object):
 
         
 
-        self.x86IR(q) # select our instuctions
+        ########self.x86IR(q) # select our instuctions
         # for qd in q:
         #     print qd.toString()
 
@@ -877,7 +938,9 @@ if __name__ == "__main__":
         raise SystemExit(1)
     try:
         tree = compiler.parseFile(sys.argv[1])
-        visitor = ASTourist(outFile, debug=0)
+        print tree
+        outFile=outFile = inFile[:-3] + ".s"
+        visitor = ASTourist(outFile, 5)
         compiler.walk(tree, visitor, walker=ASTVisitor())
         visitor.breadth()
         visitor.flatten()
