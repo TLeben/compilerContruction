@@ -13,7 +13,7 @@ from subprocess import call
 # sys.path.append('hw2/ply-3.4')
 # from parse import Parser
 
-DEBUG = 0
+DEBUG = 1
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

@@ -12,7 +12,6 @@ from x86AST import *
 
 
 class NotImplementedException(Exception):
-
     '''
     NotImplementedException is raised to handle AST nodes
     not yet implemented in the language.
@@ -21,7 +20,6 @@ class NotImplementedException(Exception):
 
 
 class Quad(object):
-
     '''Provides mutable data struct implementing three-address
     instruction using Quadruples.
     '''
@@ -32,22 +30,30 @@ class Quad(object):
         self.arg2 = arg2
         self.result = result
 
+
     def toString(self):
         # if self.arg2 is None:
         if self.op == 'callFunc':
-            return '{0} = {1}()'.format(self.result, self.arg1)
+            if self.result:
+                return '{0} = {1}({2})'.format(self.result, self.arg1, self.arg2)
+            return '{1}({2})'.format(self.result, self.arg1, self.arg2)
         elif self.op == 'OP_ASSIGN':
             return '{0} = {1}'.format(self.result, self.arg1)
         elif self.op == 'printnl':  # printnl
             return 'print {}'.format(self.arg1)
-        elif self.op == '(-)':
-            return '{0} = - {1}'.format(self.result, self.arg1)
-        ## if node
-        return "if {0} then {1} else {2}".format(self.op, self.arg1.toString(), self.arg2.toString(), self.result)
+        elif self.op == '(-)' or self.op == 'not':
+            return '{0} = {2} {1}'.format(self.result, self.arg1, self.op)
+        elif self.op == 'ifThen':
+            return 'if {0} then {2} = {1}'.format(self.arg1, self.arg2, self.result)
+        elif self.op == 'ifNot':
+            return 'if not {0} then {2} = {1}'.format(self.arg1, self.arg2, self.result)
+        elif self.op == 'discard':
+            return
+        ## default
+        return "{2} = {0} {3} {1}".format(self.arg1, self.arg2, self.result, self.op)
 
 
 class ASTourist(object):
-
     '''
     ASTourist() is a visitor object that handles all ast.Node types.
     The visit function is dynamically selected based on the name of the class.
@@ -74,11 +80,12 @@ class ASTourist(object):
 
     def getNextRegTemp(self):
         ## old code ##
-       tmp = '-' + str((self.regCounter + 1) * 4) + "(%ebp)"
-        ## new code ##
-        #tmp = "___y" + str(self.regCounter)
-
         self.regCounter += 1
+        tmp = '-' + str(self.regCounter * 4) + "(%ebp)"
+        ## new code ##
+        # tmp = "___y" + str(self.regCounter)
+
+        # self.regCounter += 1
         return tmp
 
     def genericVisit(self, node):
@@ -92,7 +99,7 @@ class ASTourist(object):
     def visitAdd(self, node):
         # Add attributes
         # left             left operand
-        #     right            right operand
+        # right            right operand
         self.stk.append(node.left)
         self.stk.append(node.right)
         self.stk.appendleft('+')
@@ -100,14 +107,18 @@ class ASTourist(object):
 
     def visitAnd(self, node):
         # And attributes
-        # nodes            list of operands
-        raise NotImplementedException('visitAnd')
+        # node            list of operands
+        self.stk.append(node.nodes[0])
+        for d in xrange(1, len(node.nodes)):
+            self.stk.append(node.nodes[d])
+            self.stk.appendleft('and')
+
 
     def visitAssAttr(self, node):
         # AssAttr attributes
         # expr             expression on the left-hand side of the dot
-        #     attrname         the attribute name, a string
-        #     flags            XXX
+        # attrname         the attribute name, a string
+        # flags            XXX
         raise NotImplementedException('visitAssAttr')
 
     def visitAssList(self, node):
@@ -118,7 +129,7 @@ class ASTourist(object):
     def visitAssName(self, node):
         # AssName attributes
         # name             name being assigned to
-        #     flags            XXX
+        # flags            XXX
         self.stk.appendleft(node.flags)
         self.stk.appendleft(node.name)
         # print node.flags
@@ -139,7 +150,7 @@ class ASTourist(object):
     def visitAssign(self, node):
         # Assign attributes
         # nodes            a list of assignment targets, one per equal sign
-        #     expr             the value being assigned
+        # expr             the value being assigned
         self.stk.append(node.expr)
         self.stk.append(node.nodes[0])
         # raise NotImplementedException('visitAssign')
@@ -147,8 +158,8 @@ class ASTourist(object):
     def visitAugAssign(self, node):
         # AugAssign attributes
         # node
-        #     op
-        #     expr
+        # op
+        # expr
         raise NotImplementedException('visitAugAssign')
 
     def visitBackquote(self, node):
@@ -179,27 +190,38 @@ class ASTourist(object):
     def visitCallFunc(self, node):
         # CallFunc attributes
         # node             expression for the callee
-        #     args             a list of arguments
-        #     star_args        the extended *-arg value
-        #     dstar_args       the extended **-arg value
+        # args             a list of arguments
+        # star_args        the extended *-arg value
+        # dstar_args       the extended **-arg value
         # print 'callFunc'
         self.stk.appendleft('callFunc')
+        for n in node.args:
+            self.stk.append(n)
+            print n
+
         self.stk.append(node.node)
         # raise NotImplementedException('visitCallFunc')
 
     def visitClass(self, node):
         # Class attributes
         # name             the name of the class, a string
-        #     bases            a list of base classes
-        #     doc              doc string, a string or <code>None</code>
-        #     code             the body of the class statement
+        # bases            a list of base classes
+        # doc              doc string, a string or <code>None</code>
+        # code             the body of the class statement
         raise NotImplementedException('visitClass')
 
     def visitCompare(self, node):
         # Compare attributes
         # expr
-        #     ops
-        raise NotImplementedException('visitCompare')
+        # ops
+        for i in range(0, len(node.ops)):
+            self.stk.append(node.expr)
+            self.stk.append(node.ops[i][1])
+            self.stk.append(node.ops[i][0])  ##our sign
+            if i < (len(node.ops) - 1):
+                self.stk.appendleft('and')
+            node.expr = node.ops[i][1]
+
 
     def visitConst(self, node):
         # Const attributes
@@ -216,8 +238,10 @@ class ASTourist(object):
 
     def visitDict(self, node):
         # Dict attributes
-        # items
-        raise NotImplementedException('visitDict')
+        # items array of items
+        # item is tuple (key, value)
+        print node.items[0]
+
 
     def visitDiscard(self, node):
         # Discard attributes
@@ -230,7 +254,7 @@ class ASTourist(object):
     def visitDiv(self, node):
         # Div attributes
         # left
-        #     right
+        # right
         raise NotImplementedException('visitDiv')
         self.stk.append(node.left)
         self.stk.append(node.right)
@@ -244,62 +268,64 @@ class ASTourist(object):
     def visitExec(self, node):
         # Exec attributes
         # expr
-        #     locals
-        #     globals
+        # locals
+        # globals
         raise NotImplementedException('visitExec')
 
     def visitFor(self, node):
         # For attributes
         # assign
-        #     list
-        #     body
-        #     else_
+        # list
+        # body
+        # else_
         raise NotImplementedException('visitFor')
 
     def visitFrom(self, node):
         # From attributes
         # modname
-        #     names
+        # names
         raise NotImplementedException('visitFrom')
 
     def visitFunction(self, node):
         # Function attributes
         # name             name used in def, a string
-        #     argnames         list of argument names, as strings
-        #     defaults         list of default values
-        #     flags            xxx
-        #     doc              doc string, a string or <code>None</code>
-        #     code             the body of the function
+        # argnames         list of argument names, as strings
+        # defaults         list of default values
+        # flags            xxx
+        # doc              doc string, a string or <code>None</code>
+        # code             the body of the function
         raise NotImplementedException('visitFunction')
 
     def visitGetattr(self, node):
         # Getattr attributes
         # expr
-        #     attrname
+        # attrname
         raise NotImplementedException('visitGetattr')
 
     def visitGlobal(self, node):
         # Global attributes
         # names
         raise NotImplementedException('visitGlobal')
-    def visitIf(self,node):
+
+    def visitIf(self, node):
         # If attributes
         # tests
-        #     
+        #
         raise NotImplementedException('visitIf')
-    
+
     def visitIfExp(self, node):
         # If attributes
         # tests
-        #     
+        #
         # <then> if <test> else <else_>
         self.stk.append(node.test)
-        # self.stk.append('then')
+        self.stk.append('test')
         self.stk.append(node.then)
-        # self.stk.append('else')
+        self.stk.append('ifThen')
         self.stk.append(node.else_)
-        self.stk.append('ifExp')
-        
+        self.stk.append('ifNot')
+
+
     def visitImport(self, node):
         # Import attributes
         # names
@@ -313,39 +339,47 @@ class ASTourist(object):
     def visitKeyword(self, node):
         # Keyword attributes
         # name
-        #     expr
+        # expr
         raise NotImplementedException('visitKeyword')
 
     def visitLambda(self, node):
         # Lambda attributes
         # argnames
-        #     defaults
-        #     flags
-        #     code
+        # defaults
+        # flags
+        # code
         raise NotImplementedException('visitLambda')
 
     def visitLeftShift(self, node):
         # LeftShift attributes
         # left
-        #     right
+        # right
         raise NotImplementedException('visitLeftShift')
 
     def visitList(self, node):
         # List attributes
         # nodes
-        raise NotImplementedException('visitList')
+
+        mkList = compiler.ast.CallFunc(compiler.ast.Name('create_list'), [compiler.ast.Const(len(node.nodes))], None, None)
+        self.stk.append(mkList)
+        for i in range(0,len(node.nodes), 1):
+            # set_subscript(list, key val)
+            setSub = compiler.ast.CallFunc(compiler.ast.Name('set_subscript'), [compiler.ast.Name('notSet'), compiler.ast.Const(i), node.nodes[i]], None, None)
+            self.stk.append(setSub)
+
+
 
     def visitListComp(self, node):
         # ListComp attributes
         # expr
-        #     quals
+        # quals
         raise NotImplementedException('visitListComp')
 
     def visitListCompFor(self, node):
         # ListCompFor attributes
         # assign
-        #     list
-        #     ifs
+        # list
+        # ifs
         raise NotImplementedException('visitListCompFor')
 
     def visitListCompIf(self, node):
@@ -356,7 +390,7 @@ class ASTourist(object):
     def visitMod(self, node):
         # Mod attributes
         # left
-        #     right
+        # right
         raise NotImplementedException('visitMod')
 
     def visitModule(self, node):
@@ -369,7 +403,7 @@ class ASTourist(object):
     def visitMul(self, node):
         # Mul attributes
         # left
-        #     right
+        # right
         raise NotImplementedException('visitMul')
         self.stk.append(node.left)
         self.stk.append(node.right)
@@ -385,12 +419,17 @@ class ASTourist(object):
     def visitNot(self, node):
         # Not attributes
         # expr
-        raise NotImplementedException('visitNot')
+        self.stk.appendleft('not')
+        self.stk.append(node.expr)
 
     def visitOr(self, node):
         # Or attributes
         # nodes
-        raise NotImplementedException('visitOr')
+        self.stk.append(node.nodes[0])
+        for d in xrange(1, len(node.nodes)):
+            self.stk.append(node.nodes[d])
+            self.stk.appendleft('or')
+
 
     def visitPass(self, node):
         # Pass attributes
@@ -400,30 +439,30 @@ class ASTourist(object):
     def visitPower(self, node):
         # Power attributes
         # left
-        #     right
+        # right
         raise NotImplementedException('visitPower')
 
     def visitPrint(self, node):
         # Print attributes
         # nodes
-        #     dest
+        # dest
         raise NotImplementedException('visitPrint')
 
     def visitPrintnl(self, node):
         # Printnl attributes
         # nodes
-        #     dest
+        # dest
         for n in node.nodes:
             # print 'printnl'
             self.stk.appendleft('printnl')
             self.stk.append(n)
-        # raise NotImplementedException('visitPrintnl')
+            # raise NotImplementedException('visitPrintnl')
 
     def visitRaise(self, node):
         # Raise attributes
         # expr1
-        #     expr2
-        #     expr3
+        # expr2
+        # expr3
         raise NotImplementedException('visitRaise')
 
     def visitReturn(self, node):
@@ -434,15 +473,15 @@ class ASTourist(object):
     def visitRightShift(self, node):
         # RightShift attributes
         # left
-        #     right
+        # right
         raise NotImplementedException('visitRightShift')
 
     def visitSlice(self, node):
         # Slice attributes
         # expr
-        #     flags
-        #     lower
-        #     upper
+        # flags
+        # lower
+        # upper
         raise NotImplementedException('visitSlice')
 
     def visitSliceobj(self, node):
@@ -456,12 +495,12 @@ class ASTourist(object):
         for n in node.nodes:
             # print n
             self.stk.append(n)
-        # raise NotImplementedException('visitStmt')
+            # raise NotImplementedException('visitStmt')
 
     def visitSub(self, node):
         # Sub attributes
         # left
-        #     right
+        # right
         raise NotImplementedException('visitSub')
         self.stk.append(node.left)
         self.stk.append(node.right)
@@ -470,22 +509,27 @@ class ASTourist(object):
 
     def visitSubscript(self, node):
         # Subscript attributes
-        # expr
-        #     flags
-        #     subs
-        raise NotImplementedException('visitSubscript')
+        # expr name or ptr
+        # flags
+        # OP_ASSIGN to set ie myList[4] = 99
+        #   OP_APPLY to get val is myList[4] is the value at index4
+        # subs ~> the subscript
+        print node.expr
+        print node.flags
+        print node.subs
+
 
     def visitTryExcept(self, node):
         # TryExcept attributes
         # body
-        #     handlers
-        #     else_
+        # handlers
+        # else_
         raise NotImplementedException('visitTryExcept')
 
     def visitTryFinally(self, node):
         # TryFinally attributes
         # body
-        #     final
+        # final
         raise NotImplementedException('visitTryFinally')
 
     def visitTuple(self, node):
@@ -510,8 +554,8 @@ class ASTourist(object):
     def visitWhile(self, node):
         # While attributes
         # test
-        #     body
-        #     else_
+        # body
+        # else_
         raise NotImplementedException('visitWhile')
 
     def visitYield(self, node):
@@ -524,7 +568,8 @@ class ASTourist(object):
             n = self.stk.pop()
             try:
                 # dumps the marker ir error is raised
-                if n == 'ifExp':
+
+                if n == 'ifThen' or n == 'ifNot' or n == 'test' or n == '==' or n == '!=' or n == '[':
                     self.stk.appendleft(n)
                     n = self.stk.pop()
 
@@ -532,11 +577,13 @@ class ASTourist(object):
             except AttributeError:
                 break
 
+
     def flatten(self):
-        print self.stk
+
         pyIR = deque()
+        listpt = ''
         if self.debug >= 1:
-            print 'flatten stk',self.stk
+            print 'flatten stk', self.stk
         act = x86Activation("main")
         varCount = 0
         self.symTable = dict()
@@ -550,7 +597,7 @@ class ASTourist(object):
                 # bc it is discarded
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
-                if self.debug >= 1:
+                if self.debug >= 2:
                     print quad.toString()
                 pyIR.append(quad)
                 # varCount = 0  # temp vars no longer needed so we reset to t0
@@ -558,70 +605,85 @@ class ASTourist(object):
                 quad.op = self.stk.popleft()
                 quad.result = self.stk.pop()
                 quad.arg1 = self.stk.pop()
-                if self.debug >= 1:
+                if self.debug >= 2:
                     print quad.toString()
                 self.symTable[quad.result] = self.getNextRegTemp()
-          
+
                 # varCount = 0  # temp vars no longer needed so we reset to t0
                 pyIR.append(quad)
-                varCount += 1
+
             elif t == 'printnl':
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
-                if self.debug >= 1:
+                if self.debug >= 2:
                     print quad.toString()
                 pyIR.append(quad)
                 # varCount = 0  # temp vars no longer needed so we reset to t0
 
             # ------Function call arg1 = function name arg2 = [,params]--- #
             elif t == 'callFunc':
+
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
-                quad.result = self.getNextTemp()
-                self.stk.appendleft(quad.result)
+                if quad.arg1 == 'create_list':
+                    quad.arg2 = self.stk.pop()
+                    quad.result = self.getNextTemp()
+                    listpt = quad.result
+                    self.symTable[quad.result] = self.getNextRegTemp()
+                    self.stk.appendleft(quad.result)
+                elif quad.arg1 == 'set_subscript':
+                    quad.arg2=[]
+
+
+                    for i in range(0,2):
+                        quad.arg2.append(self.stk.pop())
+                    self.stk.pop()
+                    quad.arg2.append(listpt)
+                elif quad.arg1 == 'get_subscript':
+                    pass
+                else:
+                    quad.result = self.getNextTemp()
+                    self.symTable[quad.result] = self.getNextRegTemp()
+                    self.stk.appendleft(quad.result)
                 if self.debug >= 1:
                     print quad.toString()
-                varCount += 1
+
                 pyIR.append(quad)
-            
+
 
             # ------------ifExp-------------------------------------------#
-            elif t == 'ifExp':
-                # we have <then> if <test> else <else>
-                # so 3 parts
-                self.stk.popleft()
-                ##the else
-                qe = Quad()
-                qe.op = 'OP_ASSIGN'
-                qe.result = self.getNextTemp()
-                self.symTable[qe.result] = self.getNextRegTemp()
-                qe.arg1 = self.stk.pop()
-                # then
-                qb = Quad()
-                qb.op = 'OP_ASSIGN'
-                qb.result = qe.result
-                qb.arg1 = self.stk.pop()
-
-                quad.arg2   = qe
-                quad.arg1   = qb
-                # node for test assignment
-                qt         = Quad()
-                qt.op      = 'OP_ASSIGN'
-                qt.arg1    = self.stk.pop()
-                qt.result  = self.getNextTemp()
-                self.symTable[qt.result] = self.getNextRegTemp()
-                quad.op     = qt.result ## test for if nodes
-                quad.result = qe.result
-                # self.symTable[quad.result] = self.getNextRegTemp()
-
-                print quad.toString()
-
+            elif t == 'test':
+                self.stk.popleft()  # dump test tag
+                quad.op = 'OP_ASSIGN'
+                quad.result = self.getNextTemp()
+                self.symTable[quad.result] = self.getNextRegTemp()
+                quad.arg1 = self.stk.pop()
                 self.stk.appendleft(quad.result)
-                pyIR.append(qt)
                 pyIR.append(quad)
-            
+
+
+            elif t == 'ifThen':
+
+                quad.op = self.stk.popleft()
+                quad.arg2 = self.stk.pop()
+                quad.arg1 = self.stk.pop()
+                quad.result = self.getNextTemp()
+                self.symTable[quad.result] = self.getNextRegTemp()
+                self.stk.appendleft(quad.arg1)  # test
+                self.stk.appendleft(quad.result)  # var common
+                pyIR.append(quad)
+
+            elif t == 'ifNot':
+
+                quad.op = self.stk.popleft()
+                quad.arg2 = self.stk.pop()
+                quad.arg1 = self.stk.pop()
+                quad.result = self.stk.pop()
+                self.stk.appendleft(quad.result)  # var common
+                pyIR.append(quad)
+
             # ------------Binary operations (+, -, *, /)------------------#
-            elif t == '+':
+            elif t == '+' or t == 'and' or t == '==' or t == '!=' or t == 'or':
                 qd2 = Quad()
                 qd2.op = 'OP_ASSIGN'
                 quad.op = self.stk.popleft()
@@ -636,12 +698,13 @@ class ASTourist(object):
                 qd2.arg1 = quad.arg2
                 qd2.result = quad.result
                 quad.arg2 = qd2.result
-                
+
                 pyIR.append(qd2)
                 pyIR.append(quad)
 
+
             # ---------------Unary operations (pos, neg, ....)-------------#
-            elif t == '(-)':
+            elif t == '(-)' or t == 'not':
                 quad.op = self.stk.popleft()
                 quad.arg1 = self.stk.pop()
                 quad.result = self.getNextTemp()
@@ -650,21 +713,23 @@ class ASTourist(object):
                 self.symTable[quad.result] = self.getNextRegTemp()
                 self.stk.appendleft(quad.result)
 
-                varCount += 1
                 pyIR.append(quad)
+
+            # ---------------Lists-------------------------------------------#
+
             else:
                 self.stk.rotate(-1)
 
         if self.debug >= 1:
             print '--------------symTable--------------------'
-            print 'symTable:\n',self.symTable,'\n'
-        
+            print 'symTable:\n', self.symTable, '\n'
+
             print '--------------flatten() results-----------'
             for q in pyIR:
                 print q.toString()
-        
-        # self.toPythonIR(pyIR)
-    
+
+                # self.toPythonIR(pyIR)
+
     def toPythonIR(self, q):
         '''
             Cleans up obvious un-needed moves
@@ -673,13 +738,13 @@ class ASTourist(object):
         vprop = None
         vtest = '~~~~~~~~~~~~~~~~~~~~~~'
         rmvs = []
-        for x in xrange(len(q)-1, -1, -1):
+        for x in xrange(len(q) - 1, -1, -1):
             if q[x].result == vtest:
                 q[x].result = vprop
 
                 if q[x].arg2 == vtest:
                     q[x].arg2 = vprop
-                    
+
             elif q[x].op is 'OP_ASSIGN':
                 vprop = q[x].result
                 vtest = q[x].arg1
@@ -689,26 +754,26 @@ class ASTourist(object):
                 vprop = None
                 vtest = '~~~~~~~~~~~~~~~~~~~~~~'
         for r in rmvs:
-            if isinstance (q[r].arg1, int):
+            if isinstance(q[r].arg1, int):
                 pass
             else:
                 q.remove(q[r])
                 # try:
-                #     q[r].arg2.result = q[r].result
-                #     q[r].arg1.result = q[r].result
+                # q[r].arg2.result = q[r].result
+                # q[r].arg1.result = q[r].result
                 # except:
-                    # pass
-                          
-        if self.debug >=1:
+                # pass
+
+        if self.debug >= 1:
             print '--------------toPythonIR() results-----------'
             for ex in q:
                 print ex.toString()
 
-        
 
-        ########self.x86IR(q) # select our instuctions
-        # for qd in q:
-        #     print qd.toString()
+
+                ########self.x86IR(q) # select our instuctions
+                # for qd in q:
+                # print qd.toString()
 
     def x86IR(self, q):
         '''
@@ -728,7 +793,7 @@ class ASTourist(object):
                 else:
                     src = py.arg1
                 act.addInstruction(x86Mov(src, py.result))
-            
+
             elif py.op == 'printnl':
                 if isinstance(py.arg1, int):
                     src = '$' + str(py.arg1)
@@ -756,10 +821,8 @@ class ASTourist(object):
                     src = py.arg1
                 act.addInstruction(x86Mov(src, py.result))
                 act.addInstruction(x86Neg(py.result))
-            
+
         self.x86ast.addRecord(act)
-
-
 
 
     # toInterCode is depreciated,
@@ -782,7 +845,7 @@ class ASTourist(object):
                 quad.arg1 = self.stk.pop()
                 if self.debug >= 1:
                     print quad.toString()
-                # varCount = 0  # temp vars no longer needed so we reset to t0
+                    # varCount = 0  # temp vars no longer needed so we reset to t0
             elif t == 'OP_ASSIGN':  # assignment operator
                 quad.op = self.stk.popleft()
                 quad.result = self.stk.pop()
@@ -907,10 +970,10 @@ class ASTourist(object):
                 self.stk.rotate(-1)
 
         self.x86ast.addRecord(act)
-        
+
         if self.debug >= 1:
             print '------------------------------------------'
-            print 'symTable:\n',symTable
+            print 'symTable:\n', symTable
             print '------------------------------------------'
 
     def renderAssembly(self, stdout=False):
@@ -926,6 +989,7 @@ class ASTourist(object):
         if stdout == False:
             fd.close()
 
+
 if __name__ == "__main__":
     import sys
 
@@ -939,7 +1003,7 @@ if __name__ == "__main__":
     try:
         tree = compiler.parseFile(sys.argv[1])
         print tree
-        outFile=outFile = inFile[:-3] + ".s"
+        outFile = sys.argv[1][:-3] + ".s"
         visitor = ASTourist(outFile, 5)
         compiler.walk(tree, visitor, walker=ASTVisitor())
         visitor.breadth()
