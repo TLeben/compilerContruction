@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o nounset
 
-zip_file="TangoMikes-hw3.zip"
+zip_file="TangoMikes-hw4.zip"
 tmp_dir="/tmp/hw_zip"
 
 rm -fr ${tmp_dir}
