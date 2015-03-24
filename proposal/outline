@@ -1,0 +1,28 @@
+Problem: Using areial photographs coupled with computer vision, bison need to be identified(adult or juvenile), counted and location logged.
+
+Research
+  -Evaluate existing computer vision algorithms as applied to our problem. 
+  -Possible candidates, OpenCV, Leptonica, etc.
+  -Experiement with pre/post-processing. ie, guassian blur, masks/filters, etc.
+  -Edge detection, blob detection, neural networks.
+  -Computer training/learning.
+  
+Dev
+  -Develop a database to orgainize data.
+  -Adapt and/or combine the findings of algorithm research. 
+  -Validate solution with test data.
+  
+Implementation
+  -Optimize algorithm.
+  -Automate the process.
+  
+Further applications/research
+  -Allow solution to scale to ground level cameras.
+  -Use solution for video.
+  -Identify non-bison animals.
+
+  ****Addition options.
+    -Mosaic all images and get one count
+    -neural network 
+        -hyper neat
+        -HOG -neural networks
