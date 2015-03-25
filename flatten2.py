@@ -39,7 +39,7 @@ class FlatVisitor(FlatVisitor):
             stm += stmt
         tmp = self.getNextTemp()
         assn = Assign([AssName(tmp, 'OP_ASSIGN')], IndirectCall(result, res))
-        return Name(tmp), stmt + stm + [assn]
+        return Name(tmp), stm + [assn]
 
     def visitGetFunPtr(self, n, args=None):
         (result, stmts) = self.dispatch(n.name)

@@ -99,8 +99,6 @@ class FreeVarVisitor(Visitor):
     def visitIntCompare(self, n, args=None):
         ret = set([])
         ret |= self.dispatch(n.expr)
-        print n.ops
-        print n.expr
         ret |= self.dispatch(n.ops[1])
         return ret
 

@@ -25,6 +25,9 @@ registers = ['eax', 'ebx', 'ecx', 'edx', 'esi', 'ebi', 'esp', 'ebp']
 gpRegs = []
 calleeSaveRegs = ['eax', 'ecx', 'edx']
 
+#symtable for var allocation
+symTable = {}
+
 class ProjectTo(Node):
     '''convert polymorphic arg to typ'''
     def __init__(self, typ, arg, lineno=None):

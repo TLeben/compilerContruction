@@ -60,7 +60,7 @@ class UniquifyVisitor(Visitor):
         elif isinstance(n, Module):
             d = depth + 1
             for stmt in n.node.nodes:
-                print stmt
+
                 lVars += self.findLocals(stmt, d)
             return lVars
 

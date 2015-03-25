@@ -564,12 +564,12 @@ class x86StkLoc(x86NoOpInstruction):
         self.name = offset
 
     def __repr__(self):
-        return '{}(%ebp)'.format(self.offset)
+        return '-{}(%ebp)'.format(self.name)
 
     def __eq__(self, other):
         if not isinstance(other, x86StkLoc):
             return False
-        return self.offset == other.offset
+        return self.name == other.name
 
 class x86Label(x86NoOpInstruction):
 
@@ -579,6 +579,15 @@ class x86Label(x86NoOpInstruction):
 
     def __repr__(self):
         return '{}:'.format(self.name)
+
+class x86Var(x86NoOpInstruction):
+
+    def __init__(self, name):
+        super(x86Var, self).__init__(name)
+        self.name = name
+
+    def __repr__(self):
+        return '{}'.format(self.name)
 
 
 

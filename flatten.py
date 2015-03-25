@@ -27,7 +27,7 @@ class FlatVisitor(Visitor):
         return tmp
 
     def getCurrTemp(self):
-        tmp = "___tmp" + str(self._tmpCounter)
+        tmp = "___flt" + str(self._tmpCounter)
         return tmp
 
     # FlatVisitor Methods-----------------------------
@@ -46,7 +46,6 @@ class FlatVisitor(Visitor):
         for child in n.nodes:
             stmtList += self.dispatch(child)
 
-        print stmtList
         return Stmt(stmtList)
 
     # Stmt :== atomic OP_ASSIGN expr | print expr | expr | e--------------------
