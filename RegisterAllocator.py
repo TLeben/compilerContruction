@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-from ASTourist import *
+import copy
+
 from x86AST import *
 from InterferenceGraph import *
-import time
-import copy
+
 
 class RegisterAllocator(object):
 

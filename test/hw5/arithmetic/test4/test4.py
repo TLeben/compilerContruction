@@ -1,5 +1,5 @@
 #!/usr/bin/env python
 
-print True + True
-print False + False
-print True or False
+sum = lambda a, b: a + b
+
+print sum(9,9)

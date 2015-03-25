@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
-print 4 == 4
+def recurse(x):
+    return 1 if x == 0 else x + recurse(x - 1)
 
-print 4==8
+print recurse(10)

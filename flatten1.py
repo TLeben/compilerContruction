@@ -23,7 +23,7 @@ class FlatVisitor(FlatVisitor):
     def visitIntCompare(self, n, args=None):
 
         (expr, sList) = self.dispatch(n.expr)
-        (ops, opsList) = self.dispatch(n.ops[1]) ######33
+        (ops, opsList) = self.dispatch(n.ops[1]) #####
         tmp = self.getNextTemp()
         assn = Assign([AssName(tmp, 'OP_ASSIGN')],
                       IntCompare(expr, [(n.ops[0][0], ops)]))
@@ -98,6 +98,7 @@ class FlatVisitor(FlatVisitor):
         return Name(tmp), stmtL + stmtR + [assn]
 
     def visitInjectFrom(self, n, args=None):
+
         (typ, stmtL) = self.dispatch(n.typ)
         (arg, stmtR) = self.dispatch(n.arg)
         tmp = self.getNextTemp()

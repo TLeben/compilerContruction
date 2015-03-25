@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 from collections import deque
+from pyAST import *
 import sys
 
 DEBUG = 0
+
+
 
 ##------------------------------------------------------------------##
 
@@ -20,9 +23,9 @@ class x86NoOpInstruction(object):
             print "New Instruction:  {}".format(self.name)
 
     def prettyPrint(self, fd):
-        fd.write("\t{}\n".format(self.__str__()))
+        fd.write("\t{}\n".format(self.__repr__()))
 
-    def __str__(self):
+    def __repr__(self):
         return "{}".format(self.name)
 
 ##------------------------------------------------------------------##
@@ -35,15 +38,17 @@ class x86OneOpInstruction(object):
     def __init__(self, name, op):
         self.name = name
         self.op = op
+        self.liveSetBefore= set()
+        self.liveSetAfter = set()
         self.debug = DEBUG
 
         if self.debug >= 1:
             print "New Instruction:  {} {}".format(self.name, self.op)
 
     def prettyPrint(self, fd):
-        fd.write("\t{}\n".format(self.__str__()))
+        fd.write("\t{}\n".format(self.__repr__()))
 
-    def __str__(self):
+    def __repr__(self):
         return "{} {}".format(self.name, self.op)
         
 ##------------------------------------------------------------------##
@@ -53,22 +58,48 @@ class x86TwoOpInstruction(object):
     '''
     Abstraction of a double operand x86 instruction
     '''
-    def __init__(self, name, lhs, rhs):
+    def __init__(self, name, lhs=None, rhs=None):
         self.name = name
         self.rhs = rhs
         self.lhs = lhs
+        self.liveSetBefore = set()
+        self.liveSetAfter = set()
         self.debug = DEBUG
 
         if self.debug >= 1:
             print "New Instruction:  {} {}, {}".format(self.name, self.lhs, self.rhs)
 
     def prettyPrint(self, fd):
-        fd.write("\t{}\n".format(self.__str__()))
+        fd.write("\t{}\n".format(self.__repr__()))
 
-    def __str__(self):
+    def __repr__(self):
         return "{} {}, {}".format(self.name, self.lhs, self.rhs)
 
+class x86ThreeOpInstruction(Node):
+
+    '''
+    Abstraction of a double operand x86 instruction
+    '''
+    def __init__(self, name, lhs=None, mhs=None, rhs=None):
+        self.name = name
+        self.rhs = rhs
+        self.mhs = mhs
+        self.lhs = lhs
+        self.liveSetBefore = set()
+        self.liveSetAfter = set()
+        self.debug = DEBUG
+
+        if self.debug >= 1:
+            print "New Instruction:  {} {}, {}, {}".format(
+                self.name, self.lhs, self.mhs, self.rhs)
+
+    def prettyPrint(self, fd):
+        fd.write("\t{}\n".format(self.__repr__()))
+
+    def __repr__(self):
+        return "{} {}, {}".format(self.name, self.lhs, self.rhs)
 ##------------------------------------------------------------------##
+
 
 class x86AST(object):
 
@@ -88,7 +119,7 @@ class x86AST(object):
     '''
     def prettyPrint(self, fd):
         # @TODO I'm assuming this won't always be true in the future
-        fd.write(".globl main\n")
+        fd.write(".globl main\n") ###   label
 
         for rec in self.records:
             rec.prettyPrint(fd)
@@ -191,7 +222,8 @@ class x86Add(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86Add, self).__init__("addl", lhs, rhs)
+        super(x86Add, self).__init__("addl",lhs, rhs)
+
 
     def prettyPrint(self, fd):
         super(x86Add, self).prettyPrint(fd)
@@ -495,4 +527,59 @@ class x86Sub(x86TwoOpInstruction):
 
     def prettyPrint(self, fd):
         super(x86Sub, self).prettyPrint(fd)
+
+
+##-----------------------------------
+# non standards
+
+class x86If(x86ThreeOpInstruction):
+
+    def __init__(self, lhs=None, mhs=None, rhs=None):
+        super(x86Sub, self).__init__("_If", lhs, mhs, rhs)
+
+class x86Const(x86NoOpInstruction):
+
+
+    def __repr__(self):
+        return '${}'.format(self.name)
+
+class x86Register(x86NoOpInstruction):
+
+    def __init__(self, reg):
+        super(x86Register, self).__init__(reg)
+        self.name = reg
+
+    def __repr__(self):
+        return '%{}'.format(self.name)
+
+    def __eq__(self, other):
+        if not isinstance(other, x86Register):
+            return False
+        return self.reg == other.reg
+
+class x86StkLoc(x86NoOpInstruction):
+
+    def __init__(self, offset):
+        super(x86StkLoc, self).__init__(offset)
+        self.name = offset
+
+    def __repr__(self):
+        return '{}(%ebp)'.format(self.offset)
+
+    def __eq__(self, other):
+        if not isinstance(other, x86StkLoc):
+            return False
+        return self.offset == other.offset
+
+class x86Label(x86NoOpInstruction):
+
+    def __int__(self, label):
+        super(x86Label,self).__init__(label)
+        self.name = label
+
+    def __repr__(self):
+        return '{}:'.format(self.name)
+
+
+
 

@@ -1,4 +1,2 @@
-
-x = [4+4, 5==5, 6]
-
-input()
+print 4
+print 2

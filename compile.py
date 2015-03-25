@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-from ASTourist import ASTourist
-from ASTourist import ASTVisitor
+from flatten2 import *
+from explicate2 import *
+from uniquify import *
+from heapify2 import *
 from RegisterAllocator import *
 
 import sys
@@ -54,14 +56,32 @@ if __name__ == "__main__":
 
         # x86 instruction selection
         # visitor.toInterCode()
-        visitor.flatten()
+        uq = UniquifyVisitor()
+        ex = ExplicateVisitor()
+        hp = HeapifyVisitor()
+        fl = FlatVisitor()
+        #cl = ClosureVisitor()
+        #si = SelectorVisitor()
+        #al = RegisterAllocator(visitor, debug=DEBUG)
+
+
+        tree = uq.preorder(tree, uq, {})   # uniquify
+        tree = ex.preorder(tree, ex)       # explicate
+        tree = hp.preorder(tree, hp)       # heapify
+        # tree = cl.preorder(tree, cl)     # create Closure
+        tree = fl.preorder(tree, fl, True) # flatten
+        # tree = si.preorder(tree,fl)      # select x86 instructions
+        # al.allocateRegisters()           # register Allocation
+        # Remove ifs                       # remove structured ifs
+        # Print x86 to file                # print to file
+
+
         if DEBUG >= 1:
             print "------------------------------------------"
             visitor.renderAssembly(stdout=True)
             print "------------------------------------------"
 
         # register allocation
-        allocator = RegisterAllocator(visitor, debug=DEBUG)
         allocator.allocateRegisters()
 
         # generate final x86 assembly

@@ -1,4 +1,6 @@
 #!/usr/bin/env python
 
-a = False == False == False
-print a
+def dbl(x):
+    return x+x
+d = 5
+print dbl(d)
