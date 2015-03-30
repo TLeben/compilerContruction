@@ -10,7 +10,7 @@ DEBUG = 0
 
 ##------------------------------------------------------------------##
 
-class x86NoOpInstruction(object):
+class x86NoOpInstruction(Node):
 
     '''
     Abstraction an x86 instruction that takes no arguments
@@ -30,7 +30,7 @@ class x86NoOpInstruction(object):
 
 ##------------------------------------------------------------------##
 
-class x86OneOpInstruction(object):
+class x86OneOpInstruction(Node):
 
     '''
     Abstraction of a single operand x86 instruction
@@ -53,7 +53,7 @@ class x86OneOpInstruction(object):
         
 ##------------------------------------------------------------------##
 
-class x86TwoOpInstruction(object):
+class x86TwoOpInstruction(Node):
 
     '''
     Abstraction of a double operand x86 instruction
@@ -101,15 +101,16 @@ class x86ThreeOpInstruction(Node):
 ##------------------------------------------------------------------##
 
 
-class x86AST(object):
+class x86AST(Node):
 
     '''
     Represents the global state of the x86 program.
     Contains a list of activation records
+    ** like module
     '''
 
-    def __init__(self):
-        self.records = deque()  # holds a list of x86Activation objects
+    def __init__(self, actRecords):
+        self.records = actRecords  # holds a list of x86Activation objects
 
     def addRecord(self, record=None):
         self.records.append(record)
@@ -117,9 +118,9 @@ class x86AST(object):
     '''
     Iterate over the set of activation records and print the assembly
     '''
-    def prettyPrint(self, fd):
+    def prettyPrint(self, fd=None):
         # @TODO I'm assuming this won't always be true in the future
-        fd.write(".globl main\n") ###   label
+        #fd.write(".globl main\n") ###   label
 
         for rec in self.records:
             rec.prettyPrint(fd)
@@ -127,21 +128,22 @@ class x86AST(object):
 ##------------------------------------------------------------------##
 
 
-class x86Activation(object):
+class x86Activation(Node):
 
     '''
     Represents an activation record.
     Responsible for creating stack space for all needed variables
+    ** like stmt list
     '''
 
     def __init__(self, name=None):
         self.name = name                # the name of the function
         self.preamble = x86Preamble()   # preamble code for this activation
         self.postamble = x86Postamble() # postamble code for this activation
-        self.instructions = deque()     # list of x86 instructions
+        self.instructions = []     # list of x86 instructions
 
     def addInstruction(self, instr=None):
-        self.instructions.append(instr)
+        self.instructions += instr
 
     def prettyPrint(self, fd):
         # print the name of the function
@@ -160,7 +162,7 @@ class x86Activation(object):
             elif isinstance(instr, x86TwoOpInstruction) and '(%ebp)' in instr.lhs:
                 stack.add(instr.lhs)
 
-        x86Sub('$' + str(len(stack)), '%esp').prettyPrint(fd)
+        x86Sub(x86Const(str(len(stack))), x86Register('esp')).prettyPrint(fd)
 
         # walk the list and print the instructions
         for instr in self.instructions:
@@ -182,8 +184,8 @@ class x86Preamble(object):
         self.instructions = deque()
 
         # these are always the first two instructions
-        self.instructions.append(x86Push("%ebp"))
-        self.instructions.append(x86Mov("%esp", "%ebp"))
+        self.instructions.append(x86Push(x86Register("ebp")))
+        self.instructions.append(x86Mov(x86Register('esp'), x86Register('ebp')))
 
     def prettyPrint(self, fd):
         for instr in self.instructions:
@@ -222,8 +224,9 @@ class x86Add(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86Add, self).__init__("addl",lhs, rhs)
-
+        self.name = 'addl'
+        self.lhs = lhs
+        self.rhs = rhs
 
     def prettyPrint(self, fd):
         super(x86Add, self).prettyPrint(fd)
@@ -238,7 +241,9 @@ class x86Call(x86OneOpInstruction):
     '''
 
     def __init__(self, func=None):
-        super(x86Call, self).__init__("call", func)
+
+        self.op = 'call'
+        self.name = func
 
     def prettyPrint(self, fd):
         super(x86Call, self).prettyPrint(fd)
@@ -313,7 +318,7 @@ class x86Leave(x86NoOpInstruction):
     '''
 
     def __init__(self):
-        super(x86Leave, self).__init__("leave")
+       self.name = 'leave'
 
     def prettyPrint(self, fd):
         super(x86Leave, self).prettyPrint(fd)
@@ -328,7 +333,10 @@ class x86Mov(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86Mov, self).__init__("movl", lhs, rhs)
+        self.lhs = lhs
+        self.rhs = rhs
+        self.name = 'movl'
+
 
     def prettyPrint(self, fd):
         super(x86Mov, self).prettyPrint(fd)
@@ -433,7 +441,9 @@ class x86Push(x86OneOpInstruction):
     '''
 
     def __init__(self, reg=None):
-        super(x86Push, self).__init__("pushl", reg)
+
+        self.op = 'pushl'
+        self.name = reg
 
     def prettyPrint(self, fd):
         super(x86Push, self).prettyPrint(fd)
@@ -448,7 +458,8 @@ class x86Ret(x86NoOpInstruction):
     '''
 
     def __init__(self):
-        super(x86Ret, self).__init__("ret")
+
+        self.name = 'ret'
 
     def prettyPrint(self, fd):
         super(x86Ret, self).prettyPrint(fd)
@@ -546,7 +557,7 @@ class x86Const(x86NoOpInstruction):
 class x86Register(x86NoOpInstruction):
 
     def __init__(self, reg):
-        super(x86Register, self).__init__(reg)
+
         self.name = reg
 
     def __repr__(self):
@@ -583,7 +594,6 @@ class x86Label(x86NoOpInstruction):
 class x86Var(x86NoOpInstruction):
 
     def __init__(self, name):
-        super(x86Var, self).__init__(name)
         self.name = name
 
     def __repr__(self):

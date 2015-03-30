@@ -20,7 +20,10 @@ class FlatVisitor(FlatVisitor):
 
     def visitReturn(self, n, args=None):
         (value, stmt) = self.dispatch(n.value)
-        return stmt + [Return(value)]
+        print '---------------------'
+        print stmt
+        print value
+        return Return(value) , stmt
 
     def visitClosure(self, n, args=None):
         (flat_name, name_stmt) = self.dispatch(n.name)
@@ -90,14 +93,19 @@ if __name__ == '__main__':
     ex = ExplicateVisitor()
     hp = HeapifyVisitor()
     fl = FlatVisitor()
-    #print tree
+    print 'initial tree-------\n',tree, '\n'
     tree = uq.preorder(tree, uq, {})
-    print 'uniquify ......................... [pass]'
-    tree = ex.preorder(tree, ex)
-    print 'explicate .........................[pass]'
-    tree = hp.preorder(tree, hp)
-    print 'heapify ...........................[pass]'
-    tree = fl.preorder(tree, fl, True)
-    print 'flatten ...........................[pass]'
     print tree
+    print '\nuniquify ......................... [pass]\n'
+    tree = ex.preorder(tree, ex)
+    print tree
+    print '\nexplicate .........................[pass]\n'
+    tree = hp.preorder(tree, hp)
+    print tree
+    print '\nheapify ...........................[pass]\n'
+    tree = fl.preorder(tree, fl, True)
+    for i in tree.node:
+        print i, '\n'
+    print '\nflatten ...........................[pass]\n'
+
 

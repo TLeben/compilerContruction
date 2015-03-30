@@ -10,6 +10,7 @@ class x86Selector(Visitor):
     symTable = {}
     todo = 1
     instList = []
+    actRecord = x86Activation('main')
     def __init__(self):
         super(x86Selector, self).__init__()
 
@@ -28,12 +29,16 @@ class x86Selector(Visitor):
         tmp = "___t" + str(self._tmpCounter)
         return x86Var(tmp)
 
+    def getNextActivationRec(self):
+        pass
+    # Visitor methods ________________________________
+
     def visitModule(self, n, args=None):
         # Module attributes
         # doc              doc string, a string or None
         # node             body of the module
-        instList = self.dispatch(n.node)
-        return instList
+        return x86AST(self.dispatch(n.node))
+        
 
     # Stmts ::= Stmt Stmts | e
     def visitStmt(self, n, args=None):
@@ -42,6 +47,7 @@ class x86Selector(Visitor):
         inst = []
         for d in n.nodes:
             inst += self.dispatch(d)
+        # self.actRecord.addInstruction(inst)
         return inst
     
     def visitAssign(self, n, args=None):
@@ -52,6 +58,7 @@ class x86Selector(Visitor):
         inst = []
         inst += self.dispatch(n.expr)
         inst += x86Mov()
+        self.actRecord.addInstruction(inst)
         return inst
     
     def visitDiscard(self, n, args=None):
@@ -63,6 +70,7 @@ class x86Selector(Visitor):
         inst.append(x86Push(self.getCurrTemp()))
         inst.append(x86Call("print_any"))
         inst.append(x86Add(x86Const(4), x86Register('esp')))
+        self.actRecord.addInstruction(inst)
         return inst
 
     def visitCallFunc(self, n, args=None):
@@ -98,14 +106,14 @@ class x86Selector(Visitor):
     def visit(self, n, args=None):
         pass
 
-    def visit(self, n, args=None):
-        pass
-    
-    def visit(self, n, args=None):
-        pass
-    
-    def visit(self, n, args=None):
-        pass
+    # def visit(self, n, args=None):
+    #     pass
+    #
+    # def visit(self, n, args=None):
+    #     pass
+    #
+    # def visit(self, n, args=None):
+    #     pass
 
 if __name__ == '__main__':
     import sys
@@ -148,7 +156,7 @@ if __name__ == '__main__':
     print 'flatten ...........................[pass]'
     iList = sl.preorder(tree, sl)
     print 'selector ..........................[pass]'
-    for inst in iList:
-        print inst
+    print iList.prettyPrint('tst.s')
+
 
 

@@ -101,6 +101,9 @@ class UniquifyVisitor(Visitor):
             #return[]
 
         elif isinstance(n, Return):
+
+            print n.value
+            #return self.findLocals(n.value)
             return []
         else:
             return []
@@ -140,7 +143,10 @@ class UniquifyVisitor(Visitor):
         for n in n.node:
             stmts += [self.dispatch(n, copy.deepcopy(symTable))]
         n.node = stmts
-        return Module(None, Stmt([n]))
+        return Module(None, Stmt(n.node))
+
+    def visitStatment(self,n,):
+        pass
 
     def visitName(self, n, symTable):
         if not (n.name == 'True' or n.name == 'False'):
