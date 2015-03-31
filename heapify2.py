@@ -11,37 +11,37 @@ class HeapifyVisitor(Visitor):
     heapSet = set()
 
     # Meta/HelperMethods----------------------------------------------------
-    def metaVisit(self, n, toFunc):
+    def metaVisit(self, n, nToFunc):
         bodyList = []
         belowList = []
         for e in n.nodes:
             (below, body) = self.dispatch(e)
             belowList += below
             bodyList.append(body)
-        return belowList, toFunc(bodyList)
+        return belowList, nToFunc(bodyList)
 
-    def metaSingleVisit(self, single, toFunc):
-        (below, body) = self.dispatch(single)
-        return below, toFunc(body)
+    def metaSingleVisit(self, n, nToFunc):
+        (below, body) = self.dispatch(n)
+        return below, nToFunc(body)
 
-    def metaVisitexpr(self, n, toFunc):
-        return self.metaSingleVisit(n.expr, toFunc)
+    def metaVisitexpr(self, n, nToFunc):
+        return self.metaSingleVisit(n.expr, nToFunc)
 
-    def metaVisitAdds(self, n, toFunc):
+    def metaVisitAdds(self, n, nToFunc):
         (leftBelow, leftBody) = self.dispatch(n.left)
         (rightBelow, rightBody) = self.dispatch(n.right)
-        return leftBelow + rightBelow, toFunc(leftBody, rightBody)
+        return leftBelow + rightBelow, nToFunc(leftBody, rightBody)
 
-    def metaVisitCompares(self, n, toFunc):
+    def metaVisitCompares(self, n, nToFunc):
         (exprBelow, exprBody) = self.dispatch(n.expr)
-        return exprBelow, toFunc(exprBody, n.ops)
+        return exprBelow, nToFunc(exprBody, n.ops)
 
-    def metaVisitPoly(self, n, toFunc):
+    def metaVisitPoly(self, n, nToFunc):
         (typBelow, typBody) = self.dispatch(n.typ)
         (argBelow, argBody) = self.dispatch(n.arg)
-        return typBelow + argBelow, toFunc(typBody, argBody)
+        return typBelow + argBelow, nToFunc(typBody, argBody)
 
-    def metaVisitCalls(self, n, makeNodeFunc):
+    def metaVisitCalls(self, n, nToFunc):
         bodyList = []
         belowList = []
         (nBelow, nBody) = self.dispatch(n.node)
@@ -49,9 +49,9 @@ class HeapifyVisitor(Visitor):
             (below, body) = self.dispatch(e)
             belowList += below
             bodyList.append(body)
-        return belowList + nBelow, makeNodeFunc(nBody, bodyList)
+        return belowList + nBelow, nToFunc(nBody, bodyList)
 
-    def getNewArgName(self, name):
+    def getNewArgName(self, n):
         self.tmpCount += 1
         return str(name) + "h_" + str(self.tmpCount)
 
@@ -66,15 +66,15 @@ class HeapifyVisitor(Visitor):
     def metaAssignInit(self, lhs):
         return self.getNewAssign(lhs, InjectFrom(Const(3), List
         ([InjectFrom(Const(0), Const(0))])))
-    def clearReserved(self, items):
+    def removeReservedFuncNames(self, items):
         return set(items) - set(reservedFuncs)
 
     # Visitor Methods-----------------------------------------------------------
-    def visitModule(self, n):
+    def visitModule(self, n, args=None):
         freeVis = FreeVarVisitor()
         freeVis.dispatch(n)
         self.heapSet |= set(freeVis.getHeapSet())
-        self.heapSet = self.clearReserved(self.heapSet)
+        self.heapSet = self.removeReservedFuncNames(self.heapSet)
         if _debug == True:
             print self.heapSet
         (free, body) = self.dispatch(n.node)
@@ -84,7 +84,7 @@ class HeapifyVisitor(Visitor):
             locs.append(self.metaAssignInit(var))
         return Module(None, Stmt(locs + body.nodes))
 
-    def visitLambda(self, n):
+    def visitLambda(self, n, args=None):
         #freeVars
         loosies = FreeVarVisitor().dispatch(n) - set(reservedFuncs)
         # local vars in scope
@@ -103,11 +103,11 @@ class HeapifyVisitor(Visitor):
             renamedArgs[argToRename] = newName
         paramAllocs = []
 
-        for arg in self.clearReserved(paramsToHeap):
+        for arg in self.removeReservedFuncNames(paramsToHeap):
             paramAllocs.append(self.metaAssignInit(arg))
         paramInits = []
 
-        for arg in self.clearReserved(paramsToHeap):
+        for arg in self.removeReservedFuncNames(paramsToHeap):
             paramInits.append \
                 (self.getNewSubscriptAssign(arg, 0, Name(paramNames[arg])))
 
@@ -115,14 +115,14 @@ class HeapifyVisitor(Visitor):
         heapifyNow = (self.heapSet & set(localNow)) - set(n.argnames)
         locInits = []
 
-        for var in self.clearReserved(heapifyNow):
+        for var in self.removeReservedFuncNames(heapifyNow):
             locInits.append(self.metaAssignInit(var))
 
         return (list(freeNow),
                Lambda(renamedArgs, n.defaults, n.flags,
                     Stmt(paramAllocs + locInits + paramInits + body.nodes)))
 
-    def visitStmt(self, n):
+    def visitStmt(self, n, args=None):
         bodyList = []
         belowList = []
         for e in n.nodes:
@@ -131,13 +131,13 @@ class HeapifyVisitor(Visitor):
             bodyList.append(body)
         return belowList, Stmt(bodyList)
 
-    def visitName(self, n):
+    def visitName(self, n, args=None):
         if n.name in self.heapSet:
             return ([], Subscript(Name(n.name), 'OP_APPLY',
                                   [InjectFrom(Const(0), Const(0))]))
         return [], n
 
-    def visitAssign(self, n):
+    def visitAssign(self, n, args=None):
         (exprBelow, exprBody) = self.dispatch(n.expr)
         if isinstance(n.nodes[0], AssName):
             if n.nodes[0].name in self.heapSet:
@@ -153,62 +153,60 @@ class HeapifyVisitor(Visitor):
             bodyList.append(body)
         return exprBelow + belowList, Assign(bodyList, exprBody)
 
-    def visitAssName(self, n):
+    def visitAssName(self, n, args=None):
         pass
 
-    def visitPrintnl(self, n):
+    def visitPrintnl(self, n, args=None):
         (below, body) = self.dispatch(n.nodes[0])
         return below, Printnl([body], n.dest)
 
-    def visitConst(self, n):
+    def visitConst(self, n, args=None):
         return [], n
 
-    def visitAdd(self, n):
+    def visitAdd(self, n, args=None):
         return self.metaVisitAdds(n, lambda l, r: Add((l, r)))
 
     def visitIntAdd(self,n):
         return self.metaVisitAdds(n, lambda l, r: IntAdd((l, r,)))
 
-    def visitBigAdd(self, n):
+    def visitBigAdd(self, n, args=None):
         return self.metaVisitAdds(n, lambda l, r: BigAdd((l, r)))
 
-    def visitOr(self, n):
+    def visitOr(self, n, args=None):
         return self.metaVisit(n, lambda nds: Or(nds))
 
-    def visitAnd(self, n):
+    def visitAnd(self, n, args=None):
         return self.metaVisit(n, lambda nds: And(nds))
 
-    def visitList(self, n):
+    def visitList(self, n, args=None):
         return self.metaVisit(n, lambda nds: List(nds))
 
-
-
-    def visitUnarySub(self, n):
+    def visitUnarySub(self, n, args=None):
         return self.metaVisitexpr(n, lambda expr: UnarySub(expr))
 
-    def visitNot(self, n):
+    def visitNot(self, n, args=None):
         return self.metaVisitexpr(n, lambda expr: Not(expr))
 
-    def visitDiscard(self, n):
+    def visitDiscard(self, n, args=None):
         return self.metaVisitexpr(n, lambda expr: Discard(expr))
 
-    def visitCompare(self, n):
+    def visitCompare(self, n, args=None):
         return self.metaVisitCompares(
             n, lambda expr, ops: Compare(expr, ops))
 
-    def visitIntCompare(self, n):
+    def visitIntCompare(self, n, args=None):
         return self.metaVisitCompares(
             n, lambda expr, ops: IntCompare(expr, ops))
 
-    def visitBigCompare(self, n):
+    def visitBigCompare(self, n, args=None):
         return self.metaVisitCompares(
             n, lambda expr, ops: BigCompare(expr, ops))
 
-    def visitIsCompare(self, n):
+    def visitIsCompare(self, n, args=None):
         return self.metaVisitCompares(
             n, lambda expr, ops: IsCompare(expr, ops))
 
-    def visitDict(self, n):
+    def visitDict(self, n, args=None):
         items = []
         itemsBelow = []
         for item in n.items:
@@ -218,7 +216,7 @@ class HeapifyVisitor(Visitor):
             itemsBelow += valBelow + keyBelow
         return (itemsBelow, Dict(items))
 
-    def visitSubscript(self, n):
+    def visitSubscript(self, n, args=None):
         bodyList = []
         belowList = []
         (exprBelow, exprBody) = self.dispatch(n.expr)
@@ -228,32 +226,32 @@ class HeapifyVisitor(Visitor):
             bodyList.append(body)
         return (exprBelow + belowList, Subscript(exprBody, n.flags, bodyList))
 
-    def visitReturn(self, n):
+    def visitReturn(self, n, args=None):
         return self.metaSingleVisit(n.value, lambda value: Return(value))
 
-    def visitIfExp(self, n):
+    def visitIfExp(self, n, args=None):
         (tstBelow, tstBody) = self.dispatch(n.test)
         (thnBelow, thnBody) = self.dispatch(n.then)
         (elsBelow, elsBody) = self.dispatch(n.else_)
         return tstBelow + thnBelow + elsBelow, IfExp(tstBody, thnBody, elsBody)
 
-    def visitLet(self, n):
+    def visitLet(self, n, args=None):
         (varBelow, varBody) = self.dispatch(n.var)
         (rBelow, rBody) = self.dispatch(n.rhs)
         (bodyBelow, bodyBody) = self.dispatch(n.body)
         return (varBelow + rBelow + bodyBelow,
                 Let(varBody, rBody, bodyBody))
 
-    def visitInjectFrom(self, n):
+    def visitInjectFrom(self, n, args=None):
         return self.metaVisitPoly(n, lambda typ, arg: InjectFrom(typ, arg))
 
-    def visitProjectTo(self, n):
+    def visitProjectTo(self, n, args=None):
         return self.metaVisitPoly(n, lambda typ, arg: ProjectTo(typ, arg))
 
-    def visitGetTag(self, n):
+    def visitGetTag(self, n, args=None):
         return self.metaSingleVisit(n.arg, lambda arg: GetTag(arg))
 
-    def visitCallFunc(self, n):
+    def visitCallFunc(self, n, args=None):
         if isinstance(n.node, Name) and n.node.name in reservedFuncs:
             bodyList = []
             belowList = []
@@ -264,7 +262,7 @@ class HeapifyVisitor(Visitor):
             return belowList, CallFunc(n.node, bodyList)
         return self.metaVisitCalls(n, lambda node, args: CallFunc(node, args))
 
-    def visitIndirectCall(self, n):
+    def visitIndirectCall(self, n, args=None):
         return self.metaVisitCalls(n,
                                    lambda node, args: IndirectCall(node, args))
 

@@ -99,7 +99,7 @@ class ExplicateVisitor(Visitor):
         # Module attributes
         # doc              doc string, a string or None
         # node             body of the module
-        return Module(n.doc, self.dispatch(n.node, True))
+        return Module(n.doc, self.dispatch(n.node))
 
     # Stmts ::= Stmt Stmts | e
     def visitStmt(self, n, args=None):

@@ -184,6 +184,7 @@ class x86Preamble(object):
         self.instructions = deque()
 
         # these are always the first two instructions
+
         self.instructions.append(x86Push(x86Register("ebp")))
         self.instructions.append(x86Mov(x86Register('esp'), x86Register('ebp')))
 
@@ -200,16 +201,16 @@ class x86Postamble(object):
     Represents the postamble code to an activation
     '''
 
-    def __init__(self):
-        self.instructions = deque()
-
+    def __init__(self, localList):
+        self.instructions = []
+        for r in reversed(calleeSaveRegs):
+            self.instructions.append(x86Pop(x86Register(r)))
         # Return value is put into %eax
         # @TODO - return value is hard coded for now
-        self.instructions.append(x86Mov('$0', '%eax'))
-
+        self.instructions.append(x86Add(x86Const(len(localList)*4),
+                                        x86Register('esp')))
         self.instructions.append(x86Leave())
         self.instructions.append(x86Ret())
-
     def prettyPrint(self, fd):
         for instr in self.instructions:
             instr.prettyPrint(fd)
@@ -273,7 +274,9 @@ class x86Cmp(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86Cmp, self).__init__("cmpl", lhs, rhs)
+        self.name = 'cmpl'
+        self.lhs = lhs
+        self.rhs = rhs
 
     def prettyPrint(self, fd):
         super(x86Cmp, self).prettyPrint(fd)
@@ -351,7 +354,9 @@ class x86Movzb(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86Movzb, self).__init__("movzbl", lhs, rhs)
+        self.name = 'movzbl'
+        self.lhs = lhs
+        self.rhs = rhs
 
     def prettyPrint(self, fd):
         super(x86Movzb, self).prettyPrint(fd)
@@ -396,7 +401,9 @@ class x86Or(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86Or, self).__init__("orl", lhs, rhs)
+        self.name = 'orl'
+        self.lhs = lhs
+        self.rhs = rhs
 
     def prettyPrint(self, fd):
         super(x86Or, self).prettyPrint(fd)
@@ -411,7 +418,9 @@ class x86And(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86And, self).__init__("andl", lhs, rhs)
+        self.name = 'andl'
+        self.lhs = lhs
+        self.rhs = rhs
 
     def prettyPrint(self, fd):
         super(x86And, self).prettyPrint(fd)
@@ -426,7 +435,9 @@ class x86Pop(x86OneOpInstruction):
     '''
 
     def __init__(self, reg=None):
-        super(x86Pop, self).__init__("popl", reg)
+        self.name = 'popl'
+        self.op = reg
+
 
     def prettyPrint(self, fd):
         super(x86Pop, self).prettyPrint(fd)
@@ -442,8 +453,8 @@ class x86Push(x86OneOpInstruction):
 
     def __init__(self, reg=None):
 
-        self.op = 'pushl'
-        self.name = reg
+        self.name = 'pushl'
+        self.op = reg
 
     def prettyPrint(self, fd):
         super(x86Push, self).prettyPrint(fd)
@@ -474,7 +485,9 @@ class x86Sal(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86Sal, self).__init__("sall", lhs, rhs)
+        self.name = 'sall'
+        self.lhs = lhs
+        self.rhs = rhs
 
     def prettyPrint(self, fd):
         super(x86Sal, self).prettyPrint(fd)
@@ -489,7 +502,9 @@ class x86Sar(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86Sar, self).__init__("sarl", lhs, rhs)
+        self.name = 'sarl'
+        self.lhs = lhs
+        self.rhs = rhs
 
     def prettyPrint(self, fd):
         super(x86Sar, self).prettyPrint(fd)
@@ -534,7 +549,10 @@ class x86Sub(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        super(x86Sub, self).__init__("subl", lhs, rhs)
+        self.name = 'subl'
+        self.lhs = lhs
+        self.rhs = rhs
+
 
     def prettyPrint(self, fd):
         super(x86Sub, self).prettyPrint(fd)
@@ -546,7 +564,19 @@ class x86Sub(x86TwoOpInstruction):
 class x86If(x86ThreeOpInstruction):
 
     def __init__(self, lhs=None, mhs=None, rhs=None):
-        super(x86Sub, self).__init__("_If", lhs, mhs, rhs)
+        self.name = '_If'
+        self.lhs = lhs
+        self.mhs = mhs
+        self.rhs = rhs
+        self.operandList = [lhs, mhs, rhs]
+
+    def __str__(self):
+        ret = ""
+        for i in range(3):
+            for inst in self.operandList[i]:
+                ret += "-"*(i+1) + ">" + repr(inst)+"\n"
+        return ret
+
 
 class x86Const(x86NoOpInstruction):
 
@@ -571,7 +601,6 @@ class x86Register(x86NoOpInstruction):
 class x86StkLoc(x86NoOpInstruction):
 
     def __init__(self, offset):
-        super(x86StkLoc, self).__init__(offset)
         self.name = offset
 
     def __repr__(self):

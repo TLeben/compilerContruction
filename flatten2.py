@@ -20,17 +20,15 @@ class FlatVisitor(FlatVisitor):
 
     def visitReturn(self, n, args=None):
         (value, stmt) = self.dispatch(n.value)
-        print '---------------------'
-        print stmt
-        print value
-        return Return(value) , stmt
+        return Return(value), stmt
 
     def visitClosure(self, n, args=None):
-        (flat_name, name_stmt) = self.dispatch(n.name)
-        (flat_env, env_stmt) = self.dispatch(n.env)
+        (flatName, nameStmt) = self.dispatch(n.name)
+        (flatSyms, envStmt) = self.dispatch(n.symTable)
         tmp = self.getNextTemp()
-        assn = Assign([AssName(tmp, 'OP_ASSIGN')], Closure(flat_name, flat_env))
-        return Name(tmp), env_stmt + name_stmt + [assn]
+        return Name(tmp), envStmt + nameStmt + \
+               [Assign([AssName(tmp, 'OP_ASSIGN')],
+                       Closure(flatName, flatSyms))]
 
     def visitIndirectCall(self, n, args=None):
         (result, stmt) = self.dispatch(n.node)
@@ -41,25 +39,25 @@ class FlatVisitor(FlatVisitor):
             res += [result]
             stm += stmt
         tmp = self.getNextTemp()
-        assn = Assign([AssName(tmp, 'OP_ASSIGN')], IndirectCall(result, res))
-        return Name(tmp), stm + [assn]
+        return Name(tmp), stm + \
+               [Assign([AssName(tmp, 'OP_ASSIGN')], IndirectCall(result, res))]
 
     def visitGetFunPtr(self, n, args=None):
         (result, stmts) = self.dispatch(n.name)
         tmp = self.getNextTemp()
-        assn = Assign([AssName(tmp, 'OP_ASSIGN')], GetFunPtr(result))
-        return Name(tmp), stmts + [assn]
+        return Name(tmp), stmts + \
+               [Assign([AssName(tmp, 'OP_ASSIGN')], GetFunPtr(result))]
 
     def visitGetFreeVars(self, n, args=None):
         (result, stmts) = self.dispatch(n.name)
         tmp = self.getNextTemp()
-        assn = Assign([AssName(tmp, 'OP_ASSIGN')], GetFreeVars(result))
-        return Name(tmp), stmts + [assn]
+        return Name(tmp), stmts + \
+               [Assign([AssName(tmp, 'OP_ASSIGN')], GetFreeVars(result))]
 
     def visitlist(self, n, args=None):
         fList = []
         for func in n:
-            fList += [self.visit(func)]
+            fList += [self.dispatch(func)]
         return fList
 
 

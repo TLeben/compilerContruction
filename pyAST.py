@@ -23,7 +23,7 @@ reservedFuncs = ['input', 'type_error', 'create_class', 'create_object',
 
 registers = ['eax', 'ebx', 'ecx', 'edx', 'esi', 'ebi', 'esp', 'ebp']
 gpRegs = []
-calleeSaveRegs = ['eax', 'ecx', 'edx']
+calleeSaveRegs = ['ebx', 'esi', 'edi']
 
 #symtable for var allocation
 symTable = {}

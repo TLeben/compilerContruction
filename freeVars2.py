@@ -167,3 +167,8 @@ class FreeVarVisitor(Visitor):
 
     def visitClosure(self, n, args=None):
         return self.dispatch(n.name) | set(n.env)
+
+    def visitWhile(self, n, args=None):
+        return self.dispatch(n.test) | self.dispatch(n.body)
+
+

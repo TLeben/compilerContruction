@@ -36,7 +36,7 @@ class FlatVisitor(Visitor):
         # Module attributes
         # doc              doc string, a string or None
         # node             body of the module
-        return Module(n.doc, self.dispatch(n.node, True))
+        return Module(n.doc, self.dispatch(n.node))
 
     # Stmts ::= Stmt Stmts | e
     def visitStmt(self, n, args=None):
@@ -55,21 +55,21 @@ class FlatVisitor(Visitor):
         # nodes            a list of assignment targets, one per equal sign
         # expr             the value being assigned
         # left = expr
-        (left, lsList) = self.dispatch(n.nodes[0], True)
-        (expr, rsList) = self.dispatch(n.expr, True)
+        (left, lsList) = self.dispatch(n.nodes[0])
+        (expr, rsList) = self.dispatch(n.expr)
         return rsList + [Assign([AssName(left, 'OP_ASSIGN')], expr)]
 
     def visitDiscard(self, n, args=None):
         # Discard attributes
         # expr  [1]
         # discard (expr)
-        return self.dispatch(n.expr, True)[1]  # [0] is None
+        return self.dispatch(n.expr)[1]  # [0] is None
 
     def visitPrintnl(self, n, args=None):
         # Printnl attributes
         # nodes
         # dest
-        (expr, sList) = self.dispatch(n.nodes[0], True)
+        (expr, sList) = self.dispatch(n.nodes[0])
         return sList + [Printnl([expr], None)]
 
     # expr:== atomic binOp (expr|atomic) | unaryOp (expr|atomic) | CallFunc(...)
@@ -81,18 +81,17 @@ class FlatVisitor(Visitor):
         # star_args        the extended *-arg value
         # dstar_args       the extended **-arg value
         tmp = self.getNextTemp()
-        return Name(tmp), \
-               [Assign([AssName(tmp, 'OP_ASSIGN')], n)]
+        return Name(tmp), [Assign([AssName(tmp, 'OP_ASSIGN')], n)]
 
     def visitIfExp(self, n, args=None):
-        (tst, sList1) = self.dispatch(n.test)
-        (thn, sList2) = self.dispatch(n.then)
-        (els, sList3) = self.dispatch(n.else_)
+        (test, tstList) = self.dispatch(n.test)
+        (then, thnList) = self.dispatch(n.then)
+        (else_, elsList) = self.dispatch(n.else_)
         tmp = self.getNextTemp()
-        ifAss = Assign([AssName(tmp, 'OP_ASSIGN')], thn)
-        elseAss = Assign([AssName(tmp, 'OP_ASSIGN')], els)
-        ifMod = If([(tst, Stmt(sList2 +[ifAss])) ], Stmt(sList3+[elseAss]))
-        return Name(tmp), sList1 + [ifMod]
+        return Name(tmp), tstList + [
+            If([(test, Stmt(thnList +
+                            [Assign([AssName(tmp, 'OP_ASSIGN')], then)]))],
+               Stmt(elsList + [Assign([AssName(tmp, 'OP_ASSIGN')], else_)]))]
 
     # binOp::= (+)----------------------
     def visitAdd(self, n, args=None):
@@ -101,8 +100,8 @@ class FlatVisitor(Visitor):
         # right            right operand
         if todo:
             print "#########visitAdd need to return Let(...) and also explicate"
-        (right, lsList) = self.dispatch(n.right, True)
-        (left, rsList) = self.dispatch(n.left, True)
+        (right, lsList) = self.dispatch(n.right)
+        (left, rsList) = self.dispatch(n.left)
 
         nNode = Add((left, right))
         tmp1 = self.getNextTemp()
@@ -116,7 +115,7 @@ class FlatVisitor(Visitor):
         # UnarySub attributes
         # expr
         # print '(-)'
-        (expr, sList) = self.dispatch(node.expr, True)
+        (expr, sList) = self.dispatch(node.expr)
         tmp = self.getNextTemp()
         return Name(tmp), sList + \
                [Assign([AssName(tmp, 'OP_ASSIGN')], UnarySub(expr))]
@@ -164,7 +163,7 @@ if __name__ == '__main__':
         except:
             pass
     visitor = FlatVisitor()
-    print visitor.preorder(tree, visitor, True)
+    print visitor.preorder(tree, visitor)
     print tree
 
 
