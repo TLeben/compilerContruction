@@ -85,7 +85,7 @@ class x86Selector(x86Selector):
         inst.append(x86Call('add'))
         inst.append(x86Add(x86Const(8), x86Register('esp')))
         inst.append(x86Mov(x86Register('eax'), self.getNextTemp()))
-
+        return inst
     # Logical Operators --------------------------------------------------------
     def visitAnd(self, n, args=None):
         inst = []
