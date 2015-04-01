@@ -243,8 +243,8 @@ class x86Call(x86OneOpInstruction):
 
     def __init__(self, func=None):
 
-        self.op = 'call'
-        self.name = func
+        self.op = func
+        self.name = 'call'
 
     def prettyPrint(self, fd):
         super(x86Call, self).prettyPrint(fd)
@@ -614,11 +614,20 @@ class x86StkLoc(x86NoOpInstruction):
 class x86Label(x86NoOpInstruction):
 
     def __int__(self, label):
-        super(x86Label,self).__init__(label)
+        super(x86Label, self).__init__()
         self.name = label
 
     def __repr__(self):
         return '{}:'.format(self.name)
+
+class x86FunLabel(x86Label):
+
+    def __int__(self, functionName):
+        super(x86Label, self).__init__()
+        self.name = functionName
+
+    def __repr__(self):
+        return '\n.globl {}'.format(self.name)
 
 class x86Var(x86NoOpInstruction):
 

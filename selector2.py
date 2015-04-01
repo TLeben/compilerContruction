@@ -8,6 +8,7 @@ class x86Selector(x86Selector):
     def visitFunction(self, n, args=None):
         stkCount = 0
         inst = []
+        inst.append(x86FunLabel(n.name.name))
         inst.append(x86Label(n.name.name))
         inst.append(x86Push(x86Register('ebp')))
         inst.append(x86Mov(x86Register('esp'), x86Register('ebp')))
@@ -77,6 +78,18 @@ class x86Selector(x86Selector):
         inst.append(x86Add(x86Const(4), x86Register('esp')))
         return inst
 
+    def prettyPrint(self, inst, indents=0):
+        for i in inst:
+            if isinstance(i, x86If):
+                print "\t" * indents + "If: " + repr(i.operandList[0])
+                self.prettyPrint(i.operandList[1], indents+1)
+                print "\t" * indents + "Else:"
+                self.prettyPrint(i.operandList[2], indents+1)
+                print "\t" * indents + "EndIf"
+            else:
+                print "\t" * indents + repr(i)
+
+
 if __name__ == '__main__':
     import sys
     import compiler
@@ -85,6 +98,7 @@ if __name__ == '__main__':
     from heapify2 import *
     from closure2 import *
     from flatten2 import *
+    from selector2 import *
     pyfi = 'x = 2'
     toExplicate = None
     if len(sys.argv) != 2:
@@ -104,12 +118,12 @@ if __name__ == '__main__':
             print 'Unable to open %s: %s' % (sys.argv[1], e)
         except:
             pass
-    uq = UniquifyVisitor()
-    ex = ExplicateVisitor()
-    hp = HeapifyVisitor()
-    cl = ClosureVisitor()
-    fl = FlatVisitor()
-    sl = x86Selector()
+    # uq = UniquifyVisitor()
+    # ex = ExplicateVisitor()
+    # hp = HeapifyVisitor()
+    # cl = ClosureVisitor()
+    # fl = FlatVisitor()
+    # sl = x86Selector()
 
     print "-"*20 + "Uniquified AST" + "-"*20
     toExplicate = UniquifyVisitor().dispatch(toExplicate)
@@ -142,8 +156,8 @@ if __name__ == '__main__':
     ir_list = []
     for func in flattened:
         ir_list += x86Selector().dispatch(func)
-    for func in ir_list:
-        print func
+    #for func in ir_list:
+    x86Selector().prettyPrint(ir_list,0)
     # print 'initial tree-------\n', tree, '\n'
     #
     # toExplicate = uq.dispatch(tree)

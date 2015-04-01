@@ -57,7 +57,7 @@ class FlatVisitor(Visitor):
         # left = expr
         (left, lsList) = self.dispatch(n.nodes[0])
         (expr, rsList) = self.dispatch(n.expr)
-        return rsList + [Assign([AssName(left, 'OP_ASSIGN')], expr)]
+        return rsList + [Assign([left], expr)]
 
     def visitDiscard(self, n, args=None):
         # Discard attributes
@@ -88,11 +88,12 @@ class FlatVisitor(Visitor):
         (then, thnList) = self.dispatch(n.then)
         (else_, elsList) = self.dispatch(n.else_)
         tmp = self.getNextTemp()
-        return Name(tmp), tstList + [
+        ret = Name(tmp), tstList + [
             If([(test, Stmt(thnList +
                             [Assign([AssName(tmp, 'OP_ASSIGN')], then)]))],
                Stmt(elsList + [Assign([AssName(tmp, 'OP_ASSIGN')], else_)]))]
-
+        print '------------------------', ret
+        return ret
     # binOp::= (+)----------------------
     def visitAdd(self, n, args=None):
         # And attributes

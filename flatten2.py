@@ -20,7 +20,7 @@ class FlatVisitor(FlatVisitor):
 
     def visitReturn(self, n, args=None):
         (value, stmt) = self.dispatch(n.value)
-        return Return(value), stmt
+        return stmt + [Return(value)] #, stmt
 
     def visitClosure(self, n, args=None):
         (flatName, nameStmt) = self.dispatch(n.name)
