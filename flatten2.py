@@ -4,8 +4,6 @@ from flatten1 import *
 
 class FlatVisitor(FlatVisitor):
 
-    def __init__(self):
-        super(FlatVisitor, self).__init__()
 
     def visitFunction(self, n, args=None):
         return Function(n.decorators, n.name,

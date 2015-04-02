@@ -93,14 +93,15 @@ class x86Selector(x86Selector):
 if __name__ == '__main__':
     import sys
     import compiler
-    from explicate2 import *
-    from uniquify import *
-    from heapify2 import *
-    from closure2 import *
-    from flatten2 import *
+    from declassify3 import *
+    from explicate3 import *
+    from uniquify3 import *
+    from heapify3 import *
+    from closure3 import *
+    from flatten3 import *
     from selector2 import *
     pyfi = 'x = 2'
-    toExplicate = None
+    toDeclassify = None
     if len(sys.argv) != 2:
         print 'Usage: %s <pythonFile.py>' % (sys.argv[0])
         tree = compiler.parse(pyfi)
@@ -111,7 +112,7 @@ if __name__ == '__main__':
         try:
             print "-"*20 + "Parsed AST" + "-"*20
             print compiler.parseFile(sys.argv[1])
-            toExplicate = compiler.parseFile(sys.argv[1])
+            toDeclassify = compiler.parseFile(sys.argv[1])
             outFile = sys.argv[1][:-3] + ".s"
 
         except IOError as e:
@@ -124,9 +125,11 @@ if __name__ == '__main__':
     # cl = ClosureVisitor()
     # fl = FlatVisitor()
     # sl = x86Selector()
-
+    print "-"*20 + "DeClassified AST" + "-"*20
+    toUnique = DeclassifyVisitor().dispatch(toDeclassify)
+    UniquifyVisitor().print_ast(toUnique.node)
     print "-"*20 + "Uniquified AST" + "-"*20
-    toExplicate = UniquifyVisitor().dispatch(toExplicate)
+    toExplicate = UniquifyVisitor().dispatch(toUnique)
     UniquifyVisitor().print_ast(toExplicate.node)
 
     print "-"*20 + "Explicated AST" + "-"*20
@@ -157,35 +160,4 @@ if __name__ == '__main__':
     for func in flattened:
         ir_list += x86Selector().dispatch(func)
     #for func in ir_list:
-    x86Selector().prettyPrint(ir_list,0)
-    # print 'initial tree-------\n', tree, '\n'
-    #
-    # toExplicate = uq.dispatch(tree)
-    # print tree
-    # print '\nuniquify ......................... [pass]\n'
-    #
-    # explicated = ex.dispatch(toExplicate)
-    # print explicated
-    # print '\nexplicate .........................[pass]\n'
-    #
-    # heapified = hp.dispatch(explicated)
-    # print heapified
-    # print '\nheapify ...........................[pass]\n'
-    # (ast, funcList) = cl.dispatch(heapified)
-    #
-    # print funcList
-    # print ast
-    # toFlatten = cl.doClosure(heapified)
-    # #tree = cl.doClosure(funcList)
-    # print toFlatten
-    # print '\nclosure ...........................[pass]\n'
-    #
-    # flattened = fl.dispatch(toFlatten)
-    # print flattened
-    # print '\nflatten ...........................[pass]\n'
-    # l = sl.dispatch(flattened[0])
-    # for i in l:
-    #     print i
-    #
-    # print '\nx86selector .......................[pass]\n'
-
+    x86Selector().prettyPrint(ir_list, 0)

@@ -3,19 +3,6 @@ from selector import *
 
 class x86Selector(x86Selector):
 
-    # If -----------------------------------------------------------------------
-    def visitIf(self, n, args=None):
-        inst = []
-        test = self.dispatch(n.tests[0][0])
-        # our test result
-        result = self.getCurrTemp()
-        thn = self.dispatch(n.tests[0][1])
-        els = self.dispatch(n.else_)
-        cmpr = [x86Push(result), x86Call('is_true')
-        , x86Add(x86Const(4), x86Register('esp')),
-        x86Cmp(x86Const(1), x86Register('eax'))]
-        inst.append(x86If(test + cmpr, thn, els))
-        return inst
 
     # Compares -----------------------------------------------------------------
     def visitIsCompare(self, n, args=None):

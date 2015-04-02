@@ -139,4 +139,25 @@ class GetFreeVars(Node):
         return 'GetFreeVars({})'.format(self.name)
 
 
+class CreateClass(Node):
+    bases = None
+
+    def __init__(self, bases):
+        self.bases = bases
+
+    def __repr__(self):
+        return 'CreateClass({})'.format(self.bases)
+
+class HasAttr(Node):
+    expr = None
+    attrname = None
+
+    def __init__(self, expr, attr):
+        self.expr = expr
+        self.attrname = attr
+
+    def __repr__(self):
+        return 'HasAttr({}, {})'.format(self.expr, self.attrname)
+
+
 

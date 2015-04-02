@@ -1,5 +1,5 @@
 from tourist import *
-from uniquify import *
+from uniquify3 import *
 from pyAST import *
 from freeVars2 import *
 

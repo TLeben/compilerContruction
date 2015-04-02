@@ -1,6 +1,6 @@
 
-from uniquify import *
-from freeVars2 import *
+from uniquify3 import *
+from freeVars3 import *
 from pyAST import *
 import copy
 _debug = False

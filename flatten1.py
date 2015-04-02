@@ -3,14 +3,14 @@ from flatten import *
 
 class FlatVisitor(FlatVisitor):
 
-    def __init__(self):
-        super(FlatVisitor, self).__init__()
+    # def __init__(self):
+    #     super(FlatVisitor, self).__init__()
 
     def visitLet(self, node, args=None):
         (right, sList) = self.dispatch(node.rhs)
         (body, sbList) = self.dispatch(node.body)
         return body, sList + \
-               [Assign([AssName(node.var.name, 'OP_ASSIGN')], right)] + sbList
+               [Assign([AssName('__' + node.var.name, 'OP_ASSIGN')], right)] + sbList
 
     def visitIsCompare(self, n, args=None):
         (expr, sList) = self.dispatch(n.expr)
@@ -121,9 +121,9 @@ class FlatVisitor(FlatVisitor):
         return Name(tmp), sList + [Assign([AssName(tmp, 'OP_ASSIGN')],
                       List([e for (e, stmt) in tupList]))]
 
-    def visitDict(self,node):
+    def visitDict(self, n, args=None):
         tupList = []
-        for e in node.items:
+        for e in n.items:
             tupList.append((self.dispatch(e[0]), self.dispatch(e[1])))
         tmp = self.getNextTemp()
         keyValList = []

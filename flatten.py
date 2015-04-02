@@ -23,11 +23,10 @@ class FlatVisitor(Visitor):
 
     def getNextTemp(self):
         self._tmpCounter += 1
-        tmp = "___flt" + str(self._tmpCounter)
-        return tmp
+        return self.getCurrTemp()
 
     def getCurrTemp(self):
-        tmp = "___flt" + str(self._tmpCounter)
+        tmp = "__flt" + str(self._tmpCounter)
         return tmp
 
     # FlatVisitor Methods-----------------------------
@@ -45,7 +44,6 @@ class FlatVisitor(Visitor):
         stmtList = []
         for child in n.nodes:
             stmtList += self.dispatch(child)
-
         return Stmt(stmtList)
 
     # Stmt :== atomic OP_ASSIGN expr | print expr | expr | e--------------------
@@ -55,9 +53,23 @@ class FlatVisitor(Visitor):
         # nodes            a list of assignment targets, one per equal sign
         # expr             the value being assigned
         # left = expr
-        (left, lsList) = self.dispatch(n.nodes[0])
-        (expr, rsList) = self.dispatch(n.expr)
-        return rsList + [Assign([left], expr)]
+        if isinstance(n.nodes[0], Subscript):
+            (expr, eList) = self.dispatch(n.nodes[0].expr)
+            (sub, sList) = self.dispatch(n.nodes[0].subs[0])
+            (stmt, stmtList) = self.dispatch(n.expr)
+            return stmtList + eList + sList + [
+                Assign([Subscript(expr, 'OP_ASSIGN', [sub])], stmt)]
+        elif isinstance(n.nodes[0], AssAttr):
+            (expr, eList) = self.dispatch(n.nodes[0].expr)
+            (stmt, stmtList) = self.dispatch(n.expr)
+            return stmtList + eList + [
+                Assign([AssAttr(expr, n.nodes[0].attrname, n.nodes[0].flags)],
+                       stmt)]
+        else:
+            (stmt, stmtList) = self.dispatch(n.expr)
+
+            return stmtList + [
+                Assign([AssName('__' + n.nodes[0].name, 'OP_ASSIGN')], stmt)]
 
     def visitDiscard(self, n, args=None):
         # Discard attributes
@@ -92,15 +104,12 @@ class FlatVisitor(Visitor):
             If([(test, Stmt(thnList +
                             [Assign([AssName(tmp, 'OP_ASSIGN')], then)]))],
                Stmt(elsList + [Assign([AssName(tmp, 'OP_ASSIGN')], else_)]))]
-        print '------------------------', ret
         return ret
     # binOp::= (+)----------------------
     def visitAdd(self, n, args=None):
         # And attributes
         # left             left operand
         # right            right operand
-        if todo:
-            print "#########visitAdd need to return Let(...) and also explicate"
         (right, lsList) = self.dispatch(n.right)
         (left, rsList) = self.dispatch(n.left)
 
@@ -112,11 +121,11 @@ class FlatVisitor(Visitor):
 
     # unaryOp::= (-) -----------------------
 
-    def visitUnarySub(self, node, args=None):
+    def visitUnarySub(self, n, args=None):
         # UnarySub attributes
         # expr
         # print '(-)'
-        (expr, sList) = self.dispatch(node.expr)
+        (expr, sList) = self.dispatch(n.expr)
         tmp = self.getNextTemp()
         return Name(tmp), sList + \
                [Assign([AssName(tmp, 'OP_ASSIGN')], UnarySub(expr))]
@@ -138,7 +147,7 @@ class FlatVisitor(Visitor):
     def visitName(self, n, args=None):
         # Name attributes
         # name
-        return Name(n.name), []
+        return Name('__' + n.name), []
 
 if __name__ == '__main__':
     import sys

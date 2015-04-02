@@ -8,7 +8,10 @@ class UniquifyVisitor(Visitor):
     varCount = 0
 
     def uniquify(self, symTable, name):
-        return symTable[name]
+        if symTable.has_key(name):
+            return symTable[name]
+        else:
+            return name
 
     def uniquifyLocals(self, locals, symTable):
         for v in locals:
@@ -145,6 +148,7 @@ class UniquifyVisitor(Visitor):
         return n
 
     def visitFunction(self, n, symTable):
+        print symTable
         n.name = self.uniquify(symTable, n.name)
         locVars = self.findLocals(n)
         self.uniquifyLocals(locVars, symTable)
@@ -159,7 +163,7 @@ class UniquifyVisitor(Visitor):
         n.argnames = args
         return n
 
-    def visitModule(self, n, symTable={}):
+    def visitModule(self, n, symTable = {}):
         locVars = self.findLocals(n)
         self.uniquifyLocals(locVars, symTable)
         n.localVars = [symTable[val] for val in locVars]
@@ -169,8 +173,11 @@ class UniquifyVisitor(Visitor):
         n.node = stmts
         return Module(None, Stmt(n.node))
 
-    def visitStatment(self,n,symTable):
-        pass
+    def visitStmt(self, n, symTable):
+        stmts = []
+        for nd in n.nodes:
+            stmts.append(self.dispatch(nd, symTable))
+        return Stmt(stmts)
 
     def visitName(self, n, symTable):
         if not (n.name == 'True' or n.name == 'False'):

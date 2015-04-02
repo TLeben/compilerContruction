@@ -637,6 +637,16 @@ class x86Var(x86NoOpInstruction):
     def __repr__(self):
         return '{}'.format(self.name)
 
+class x86While(x86TwoOpInstruction):
+    def __init__(self, test, body):
+        self.name = 'loopWhile'
+        self.lhs = test
+        self.rhs = body
+
+    def __repr__(self):
+        return 'WHILE:\n\t TEST: {}\n\t BODY: {}'.format(self.lhs, self.rhs)
+
+
 
 
 
