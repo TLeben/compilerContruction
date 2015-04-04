@@ -28,4 +28,5 @@ class UniquifyVisitor(UniquifyVisitor):
         n.tests = [(self.dispatch(n.tests[0][0], symTable),
                     self.dispatch(n.tests[0][1], symTable))]
         n.else_ = self.dispatch(n.else_, symTable)
+        return n
 

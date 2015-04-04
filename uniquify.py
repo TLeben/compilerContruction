@@ -20,7 +20,6 @@ class UniquifyVisitor(Visitor):
 
     def print_ast(self, stmts, tab=0):
         for n in stmts.nodes:
-
             if isinstance(n, If):
                 print '\t' * tab + 'If: ' + str(n.tests[0][0]) + ' then:'
                 self.print_ast(n.tests[0][1], tab+1)

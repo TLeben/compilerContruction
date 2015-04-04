@@ -26,8 +26,8 @@ class ExplicateVisitor(ExplicateVisitor):
                      self.dispatch(n.body), None)
 
     def visitIf(self, n, args=None):
-        return If([self.dispatch(n.tests[0][0]),
-                   self.dispatch(n.tests[0][1])],
+        return If([(self.dispatch(n.tests[0][0]),
+                   self.dispatch(n.tests[0][1]))],
                   self.dispatch(n.else_))
 
 

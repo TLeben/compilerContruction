@@ -2,15 +2,19 @@ from pyAST import *
 from tourist import Visitor
 from x86AST import *
 from uniquify3 import *
+import string
+import random
 
 regAllocation = False
 
 class x86Selector(Visitor):
 
     _tmpCounter = 0
+    _strCount = 0
     symTable = {}
     todo = 1
     instList = []
+    dataSection = ""
 
     def __init__(self):
         super(x86Selector, self).__init__()
@@ -34,6 +38,19 @@ class x86Selector(Visitor):
     def getCurrTemp(self):
         tmp = "__t" + str(self._tmpCounter)
         return x86Var(tmp)
+
+    def getRandLabel(self, length=6):
+        return ''.join(random.choice(
+            string.ascii_lowercase +
+            string.digits)
+                       for _ in range(length))
+
+    def toDataStr(self, strng):
+        self._strCount +=1
+        strLabel = '.UserStr{}{}:'.format(self._strCount, self.getRandLabel())
+        self.dataSection += '\n' + strLabel
+        self.dataSection += '\n\t.string \"{}\"'.format(strng)
+        return strLabel()
 
     def getNextActivationRec(self):
         pass
@@ -75,44 +92,7 @@ class x86Selector(Visitor):
         # nodes            a list of assignment targets, one per equal sign
         # expr             the value being assigned
         inst = []
-        if getattr(n, 'tailcall', False):
-            # callFun = n.expr
-            #
-            # actRecOffset = (len(callFun.args)) - n.callerArgNum *4
-            #
-            #
-            #
-            #
-            #
-            #
-            print 'tailCall-------------------------------------------------------------------------'
-            pass####################################################3
-            # #save eip and ebp and restore to correct place if necessary.
-				# newFrameOffset = (len(ast.expr.args) - ast.callerArgNum) * 4
-				# if newFrameOffset != 0:
-				# 	frameAdjTmpVar = self.makeTmpVar()
-				# 	myIRList.append(x86.Movl(x86.MemLoc(0), frameAdjTmpVar)) #save previous ebp
-				# 	myIRList.append(x86.Movl(frameAdjTmpVar, x86.MemLoc(newFrameOffset)))
-				# 	myIRList.append(x86.Movl(x86.MemLoc(4), frameAdjTmpVar)) #save previous eip
-				# 	myIRList.append(x86.Movl(frameAdjTmpVar, x86.MemLoc(newFrameOffset+4)))
-				# 	myIRList.append(x86.Addl(x86.ConstNode(newFrameOffset),x86.Register('ebp')))
-            #
-				# #handle arguments
-				# counter = 8
-				# for arg in ast.expr.args:
-				# 	myIRList += self.generate_x86_code(arg)
-				# 	myIRList.append(x86.Movl(self.getTmpVar(),x86.MemLoc(counter)))
-				# 	counter += 4
-				# #jump to tailcall-ee (after the frame realloc)
-				# myIRList += self.generate_x86_code(ast.expr.node)
-				# myIRList.append(x86.Movl(self.getTmpVar(),x86.Register('eax')))
-				# #restore callee save registers
-				# for register in reversed(self._calleeSaveRegisters):
-				# 	myIRList.append(x86.Popl(register))
-				# myIRList.append(x86.Movl(x86.Register('ebp'), x86.Register('esp')))
-				# myIRList.append(x86.Addl(x86.ConstNode(3), x86.Register('eax')))
-				# myIRList.append(x86.JmpStar(x86.Register('eax')))
-				# return myIRList
+
         if isinstance(n.nodes[0], AssName): # assign to variable
             inst += self.dispatch(n.expr)
             inst.append(x86Mov(self.getCurrTemp(),

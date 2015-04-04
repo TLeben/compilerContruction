@@ -1,7 +1,7 @@
-class C(object):
-    x = 4
-    def foo(x):
-        return x+3
+print [3,4]
+
+x = [3,4]
+
 
 
 

@@ -3,8 +3,8 @@ from flatten import *
 
 class FlatVisitor(FlatVisitor):
 
-    # def __init__(self):
-    #     super(FlatVisitor, self).__init__()
+    def __init__(self):
+         super(FlatVisitor, self).__init__()
 
     def visitLet(self, node, args=None):
         (right, sList) = self.dispatch(node.rhs)

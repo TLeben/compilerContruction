@@ -147,6 +147,8 @@ class FlatVisitor(Visitor):
     def visitName(self, n, args=None):
         # Name attributes
         # name
+        if n.name == TRUE or n.name == FALSE:
+            return Name(n.name), []
         return Name('__' + n.name), []
 
 if __name__ == '__main__':

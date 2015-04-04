@@ -32,8 +32,6 @@ class DeclassifyVisitor(Visitor):
     # Stmts ::= Stmt Stmts | e
     def visitStmt(self, n, thisClass=None):
         stmtList = []
-        print '$'*50
-        print n, '\n'
         for child in n.nodes:
             c = self.dispatch(child, thisClass)
             if isinstance(c, List):
@@ -173,8 +171,8 @@ class DeclassifyVisitor(Visitor):
 
     # p3 Visitor Methods -------------------------------------------------------
     def visitIf(self, n, thisClass=None):
-        test = self.dispatch(n.test[0][0], thisClass)
-        then = self.dispatch(n.then[0][1], thisClass)
+        test = self.dispatch(n.tests[0][0], thisClass)
+        then = self.dispatch(n.tests[0][1], thisClass)
         else_ = self.dispatch(n.else_, thisClass)
         return If([(test, then)], else_)
 
@@ -195,9 +193,6 @@ class DeclassifyVisitor(Visitor):
         # newClass.append(Assign([AssName(n.name, 'OP_ASSIGN')],
         #                        Name(classAlias)))
         #return newClass
-        print '='*50
-        print n.code
-        print b
         return [a] + b.nodes + [c]
 
     def visitGetattr(self, n, thisClass=None):

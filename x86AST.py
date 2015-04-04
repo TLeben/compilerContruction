@@ -174,7 +174,7 @@ class x86Activation(Node):
 ##------------------------------------------------------------------##
 
 
-class x86Preamble(object):
+class x86Preamble(Node):
 
     '''
     Represents the preamble code to an activation.  Also handles allocating stack space
@@ -195,7 +195,7 @@ class x86Preamble(object):
 ##------------------------------------------------------------------##
 
 
-class x86Postamble(object):
+class x86Postamble(Node):
 
     '''
     Represents the postamble code to an activation
@@ -291,10 +291,26 @@ class x86Je(x86OneOpInstruction):
     '''
 
     def __init__(self, label=None):
-        super(x86Je, self).__init__("je", label)
+        self.name = 'je'
+        self.op = label
 
     def prettyPrint(self, fd):
         super(x86Je, self).prettyPrint(fd)
+
+##------------------------------------------------------------------##
+
+
+class x86Jne(x86OneOpInstruction):
+
+    '''
+    Abstraction of the x86 je instruction
+    '''
+
+    def __init__(self, label=None):
+        self.name = 'jne'
+        self.op = label
+    def prettyPrint(self, fd):
+        super(x86Jne, self).prettyPrint(fd)
 
 ##------------------------------------------------------------------##
 
@@ -306,7 +322,8 @@ class x86Jmp(x86OneOpInstruction):
     '''
 
     def __init__(self, label=None):
-        super(x86Jmp, self).__init__("jmp", label)
+        self.name = 'jmp'
+        self.op = label
 
     def prettyPrint(self, fd):
         super(x86Jmp, self).prettyPrint(fd)
@@ -564,7 +581,7 @@ class x86Sub(x86TwoOpInstruction):
 class x86If(x86ThreeOpInstruction):
 
     def __init__(self, lhs=None, mhs=None, rhs=None):
-        self.name = '_If'
+        self.name = 'x86If'
         self.lhs = lhs
         self.mhs = mhs
         self.rhs = rhs
@@ -596,7 +613,7 @@ class x86Register(x86NoOpInstruction):
     def __eq__(self, other):
         if not isinstance(other, x86Register):
             return False
-        return self.reg == other.reg
+        return self.name == other.name
 
 class x86StkLoc(x86NoOpInstruction):
 
