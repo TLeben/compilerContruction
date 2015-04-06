@@ -143,6 +143,7 @@ class x86Activation(Node):
         self.instructions = []     # list of x86 instructions
 
     def addInstruction(self, instr=None):
+
         self.instructions += instr
 
     def prettyPrint(self, fd):
@@ -181,12 +182,18 @@ class x86Preamble(Node):
     '''
 
     def __init__(self):
-        self.instructions = deque()
+        self.instructions = []
 
         # these are always the first two instructions
 
-        self.instructions.append(x86Push(x86Register("ebp")))
-        self.instructions.append(x86Mov(x86Register('esp'), x86Register('ebp')))
+        #self.instructions.append(x86Push(x86Register("ebp")))
+        #self.instructions.append(x86Mov(x86Register('esp'), x86Register('ebp')))
+
+    def addInst(self, inst):
+        if isinstance(inst, list) or isinstance(inst, List):
+            self.instructions += inst
+        else:
+            self.instructions.append(inst)
 
     def prettyPrint(self, fd):
         for instr in self.instructions:
@@ -259,7 +266,9 @@ class x86CallPtr(x86OneOpInstruction):
     '''
 
     def __init__(self, func=None):
-        super(x86CallPtr, self).__init__("call*", func)
+
+        self.name = 'call*'
+        self.op = func
 
     def prettyPrint(self, fd):
         super(x86CallPtr, self).prettyPrint(fd)

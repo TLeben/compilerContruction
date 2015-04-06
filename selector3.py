@@ -3,6 +3,16 @@ from selector2 import *
 
 class x86Selector(x86Selector):
 
+    def doPass(self, ast,  debug=0):
+        ir = []
+        if debug:
+            print '-'*20 + self.__class__.__name__  + '-' *20
+        for inst in ast:
+            ir += x86Selector().dispatch(inst)
+        if debug:
+            self.prettyPrint(ir, 0)
+        return ir
+
     def visitAssAttr(self, n, args=None):
 
         pass
@@ -77,6 +87,7 @@ if __name__ == '__main__':
     from flatten3 import *
     from selector3 import *
     from unstructorFlow import *
+    debug = 1
     pyfi = 'x = 2'
     toDeclassify = None
     if len(sys.argv) != 2:
@@ -87,61 +98,33 @@ if __name__ == '__main__':
         raise SystemExit(1)
     else:
         try:
-            print "-"*20 + "Parsed AST" + "-"*20
-            print compiler.parseFile(sys.argv[1])
+            if debug:
+                print "-"*20 + "Parsed AST" + "-"*20
             toDeclassify = compiler.parseFile(sys.argv[1])
+            if debug:
+                print toDeclassify
             outFile = sys.argv[1][:-3] + ".s"
 
         except IOError as e:
             print 'Unable to open %s: %s' % (sys.argv[1], e)
         except:
             pass
-    # uq = UniquifyVisitor()
-    # ex = ExplicateVisitor()
-    # hp = HeapifyVisitor()
-    # cl = ClosureVisitor()
-    # fl = FlatVisitor()
-    # sl = x86Selector()
-    print "-"*20 + "DeClassified AST" + "-"*20
-    toUnique = DeclassifyVisitor().dispatch(toDeclassify)
-    UniquifyVisitor().print_ast(toUnique.node)
-    print "-"*20 + "Uniquified AST" + "-"*20
-    toExplicate = UniquifyVisitor().dispatch(toUnique)
-    UniquifyVisitor().print_ast(toExplicate.node)
 
-    print "-"*20 + "Explicated AST" + "-"*20
-    explicated = ExplicateVisitor().dispatch(toExplicate)
-    UniquifyVisitor().print_ast(explicated.node)
+    toUnique = DeclassifyVisitor().doPass(toDeclassify, debug)
 
-    print "-"* 20 + "Heapified AST" + "-"*20
-    heapified = HeapifyVisitor().dispatch(explicated)
-    UniquifyVisitor().print_ast(Stmt(heapified))
+    toExplicate = UniquifyVisitor().doPass(toUnique, debug)
 
-    print "-"*20 + "Global Func List" + "-"*20
-    (ast, fun_list) = ClosureVisitor().dispatch(heapified)
-    UniquifyVisitor().print_ast(Stmt(fun_list))
+    toHeapify = ExplicateVisitor().doPass(toExplicate, debug)
 
-    print "-"*20 + "Closure Converted AST" + "-"*20
-    UniquifyVisitor().print_ast(ast.node)
+    toClosure = HeapifyVisitor().doPass(toHeapify, debug)
 
-    print "-"*20 + "Final Func List" + "-"*20
-    to_flatten = ClosureVisitor().doClosure(heapified)
-    UniquifyVisitor().print_ast(Stmt(to_flatten))
+    toFlatten = ClosureVisitor().doPass(toClosure, debug)
 
-    print "-"*20 + "Flattened Func List" + "-"*20
-    flattened = FlatVisitor().dispatch(to_flatten)
-    UniquifyVisitor().print_ast(Stmt(flattened))
+    toSelector = FlatVisitor().doPass(toFlatten, debug)
 
-    print "-"*20 + "x86IR" + "-"*20
-    x86Ir = []
-    for func in flattened:
-        x86Ir += x86Selector().dispatch(func)
-    ir = FlowStripper().destructure(x86Ir)
+    toRemoveFlow = x86Selector().doPass(toSelector, debug)
+
+    unFlowed = FlowStripper().doPass(toRemoveFlow, debug)
 
 
-    x86Selector().prettyPrint(x86Ir, 0)
-    sl = x86Selector()
-    sl.prettyPrint(ir,0)
-    print sl.dataSection
-    # x86Selector().prettyPrint(ir, 0)
 

@@ -1,3 +1,5 @@
+from pyAST import *
+
 class NotImplementedException(Exception):
     '''
     NotImplementedException is raised to handle AST nodes
@@ -61,4 +63,39 @@ class Visitor(object):
         self.visitor = visitor
         visitor.visit = self.dispatch
         return self.dispatch(tree, *args)
+
+    def doPass(self, ast,  debug=0):
+        if debug:
+            print '-'*20 + self.__class__.__name__ + '-'*20
+        passed = self.dispatch(ast)
+        if debug:
+            self.toString(passed)
+        return passed
+
+    def toString(self, stmts, tab=0):
+        if stmts.nodes:
+            sList = stmts.nodes
+        else:
+            sList = stmts.node.nodes
+        for n in sList:
+            if isinstance(n, If):
+                print '\t' * tab + 'If: ' + str(n.tests[0][0]) + ' then:'
+                self.toString(n.tests[0][1], tab+1)
+                print '\t' * (tab) + 'Else: '
+                self.toString(n.else_, tab+1)
+                print '\t' * (tab) + 'End If'
+            elif isinstance(n, While):
+                print '\t' * tab + 'While: ' + str(n.test) + ' then:'
+                self.toString(n.body, tab+1)
+                print '\t' * (tab) + 'End While'
+            elif isinstance(n, Lambda):
+                print '\t' * tab + 'Lambda (' + str(n.argnames) + '):'
+                self.toString(Stmt([n.code]), tab+1)
+                print '\t' * tab + 'EndLambda'
+            elif isinstance(n, Function):
+                print '\t' * tab + 'def ' + str(n.name) + '(' + str(n.argnames) + '):'
+                self.toString(n.code, tab+1)
+                print '\t' * tab + 'EndFunc'
+            else:
+                print '\t' * (tab) + str(n)
 

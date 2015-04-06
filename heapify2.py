@@ -11,6 +11,10 @@ class HeapifyVisitor(Visitor):
     heapSet = set()
 
     # Meta/HelperMethods----------------------------------------------------
+
+    def toString(self, stmts, tab=0):
+        Visitor().toString(Stmt(stmts), tab)
+
     def metaVisit(self, n, nToFunc):
         bodyList = []
         belowList = []

@@ -20,7 +20,8 @@ class FlatVisitor(Visitor):
         super(FlatVisitor, self).__init__()
 
     # Helper methods----------------------------------
-
+    def toString(self, stmts, tab=0):
+        Visitor().toString(Stmt(stmts), tab)
     def getNextTemp(self):
         self._tmpCounter += 1
         return self.getCurrTemp()

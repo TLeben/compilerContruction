@@ -9,6 +9,9 @@ class ExplicateVisitor(Visitor):
         super(ExplicateVisitor, self).__init__()
 
     # Helper methods----------------------------------
+    def toString(self, stmts, tab=0):
+        Visitor().toString(stmts.node, tab)
+
     def getNextTemp(self):
         self._tmpCounter += 1
         tmp = "___expTmp" + str(self._tmpCounter)
@@ -137,13 +140,13 @@ class ExplicateVisitor(Visitor):
     # expr:== atomic binOp (expr|atomic) | unaryOp (expr|atomic) | CallFunc(...)
     #                   ifExp
 
-    def visitCallFunc(self, n, args=None):
-        # CallFunc attributes
-        # node             expression for the callee
-        # args             a list of arguments
-        # star_args        the extended *-arg value
-        # dstar_args       the extended **-arg value
-        return InjectFrom(tagof[INT_t], n)
+    # def visitCallFunc(self, n, args=None):
+    #     # CallFunc attributes
+    #     # node             expression for the callee
+    #     # args             a list of arguments
+    #     # star_args        the extended *-arg value
+    #     # dstar_args       the extended **-arg value
+    #     return InjectFrom(tagof[INT_t], n)
 
     def visitIfExp(self, n, args=None):
         tmp = Name(self.getNextTemp())

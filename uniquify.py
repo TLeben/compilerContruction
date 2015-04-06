@@ -7,6 +7,9 @@ import copy
 class UniquifyVisitor(Visitor):
     varCount = 0
 
+    def toString(self, stmts, tab=0):
+        Visitor().toString(stmts.node, tab)
+
     def uniquify(self, symTable, name):
         if symTable.has_key(name):
             return symTable[name]
@@ -17,29 +20,6 @@ class UniquifyVisitor(Visitor):
         for v in locals:
             symTable[v] = '__{}{}'.format(v, self.varCount)
             self.varCount += 1
-
-    def print_ast(self, stmts, tab=0):
-        for n in stmts.nodes:
-            if isinstance(n, If):
-                print '\t' * tab + 'If: ' + str(n.tests[0][0]) + ' then:'
-                self.print_ast(n.tests[0][1], tab+1)
-                print '\t' * (tab) + 'Else: '
-                self.print_ast(n.else_, tab+1)
-                print '\t' * (tab) + 'End If'
-            elif isinstance(n, While):
-                print '\t' * tab + 'While: ' + str(n.test) + ' then:'
-                self.print_ast(n.body, tab+1)
-                print '\t' * (tab) + 'End While'
-            elif isinstance(n, Lambda):
-                print '\t' * tab + 'Lambda (' + str(n.argnames) + '):'
-                self.print_ast(Stmt([n.code]), tab+1)
-                print '\t' * tab + 'EndLambda'
-            elif isinstance(n, Function):
-                print '\t' * tab + 'def ' + str(n.name) + '(' + str(n.argnames) + '):'
-                self.print_ast(n.code, tab+1)
-                print '\t' * tab + 'EndFunc'
-            else:
-                print '\t' * (tab) + str(n)
 
     def findLocals(self, n, depth=0, thisScope=True):
         lVars = []

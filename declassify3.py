@@ -22,6 +22,8 @@ class DeclassifyVisitor(Visitor):
     def getCurrMeth(self):
         return "__methDc" + str(self._methCounter)
 
+    def toString(self, stmts, tab=0):
+        Visitor().toString(stmts.node, tab)
 
 
     # p0 Visitor Methods ----------------------------------------------------------
@@ -63,11 +65,12 @@ class DeclassifyVisitor(Visitor):
 
     def visitCallFunc(self, n, thisClass=None):
         argList = []
-        for arg in n.thisClass:
-            if isinstance(arg, List):
-                argList += arg
+        for arg in n.args:
+            ag = self.dispatch(arg, thisClass)
+            if isinstance(ag, List):
+                argList += ag
             else:
-                argList.append(arg)
+                argList.append(ag)
 
         return CallFunc(self.dispatch(n.node, thisClass), argList)
 

@@ -19,8 +19,12 @@ class x86Selector(Visitor):
     def __init__(self):
         super(x86Selector, self).__init__()
 
-    # Mets/Helper methods----------------------------------
+    # Meths/Helper methods----------------------------------
 
+
+
+            #print '~'*15 'with structured flow' + '~' *15
+    #x86Selector().prettyPrint(x86Ir, 0)
     def updateSymTable(self, var, val=None):
         if var in self.symTable:
             pass
@@ -50,7 +54,7 @@ class x86Selector(Visitor):
         strLabel = '.UserStr{}{}:'.format(self._strCount, self.getRandLabel())
         self.dataSection += '\n' + strLabel
         self.dataSection += '\n\t.string \"{}\"'.format(strng)
-        return strLabel()
+        return strLabel
 
     def getNextActivationRec(self):
         pass
@@ -67,6 +71,22 @@ class x86Selector(Visitor):
         for r in reversed(calleeSaveRegs):
             inst.append(x86Pop(x86Register(r)))
         return inst
+
+    def prettyPrint(self, inst, indents=0):
+        for i in inst:
+            if isinstance(i, x86If):
+                print "\t" * indents + "If: " + repr(i.operandList[0])
+                self.prettyPrint(i.operandList[1], indents+1)
+                print "\t" * indents + "Else:"
+                self.prettyPrint(i.operandList[2], indents+1)
+                print "\t" * indents + "EndIf"
+            elif isinstance(i, x86Preamble):
+                print "# preamble"
+                self.prettyPrint(i.instructions)
+            elif isinstance(i, x86Label):
+                print '\t' * indents + repr(i)
+            else:
+                print "\t" * (indents + 1) + repr(i)
 
     # Visitors abstract --------------------------------------------------------
 

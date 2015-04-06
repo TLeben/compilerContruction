@@ -1,7 +1,9 @@
-print [3,4]
+print 2
 
-x = [3,4]
+def foo(x):
+    return x
 
+foo(2)
 
 
 

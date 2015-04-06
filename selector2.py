@@ -7,29 +7,31 @@ class x86Selector(x86Selector):
     # Functions ----------------------------------------------------------------
     def visitFunction(self, n, args=None):
         stkCount = 0
-        inst = []
-        inst.append(x86FunLabel(n.name.name))
-        inst.append(x86Label(n.name.name))
-        inst.append(x86Push(x86Register('ebp')))
-        inst.append(x86Mov(x86Register('esp'), x86Register('ebp')))
+        preamble = x86Preamble()
+        instr = []
+        preamble.addInst(x86FunLabel(n.name.name))
+        preamble.addInst(x86Label(n.name.name))
+        preamble.addInst(x86Push(x86Register('ebp')))
+        preamble.addInst(x86Mov(x86Register('esp'), x86Register('ebp')))
 
         locals = set(UniquifyVisitor().findLocals(n))
-        inst.append(x86Sub(x86Const(len(locals)*4), x86Register('esp')))
+        preamble.addInst(x86Sub(x86Const(len(locals)*4), x86Register('esp')))
 
-        (instr, sCnt) = self.pushCalleeSaves(stkCount)
+        (saves, sCnt) = self.pushCalleeSaves(stkCount)
         stkCount += sCnt
-        inst += instr
+        preamble.addInst(saves)
 
         for arg in n.argnames:
-            inst.append(x86Mov(x86StkLoc(stkCount), self.updateSymTable(arg)))
+            preamble.addInst(x86Mov(x86StkLoc(stkCount), self.updateSymTable(arg)))
             stkCount +=4
         # collect body stmts
-        inst += self.dispatch(n.code)
+        instr += self.dispatch(n.code)
 
-        inst += self.popCalleeSaves()
-        inst.append(x86Add(x86Const(len(locals)*4), x86Register('esp')))
-        inst += [x86Leave(), x86Ret()]
-        return inst
+        instr += self.popCalleeSaves()
+        instr.append(x86Add(x86Const(len(locals)*4), x86Register('esp')))
+        instr.append(x86Leave())
+        instr.append(x86Ret())
+        return [preamble] + instr
 
     def visitReturn(self, n, args=None):
         inst = []
@@ -78,16 +80,21 @@ class x86Selector(x86Selector):
         inst.append(x86Add(x86Const(4), x86Register('esp')))
         return inst
 
-    def prettyPrint(self, inst, indents=0):
-        for i in inst:
-            if isinstance(i, x86If):
-                print "\t" * indents + "If: " + repr(i.operandList[0])
-                self.prettyPrint(i.operandList[1], indents+1)
-                print "\t" * indents + "Else:"
-                self.prettyPrint(i.operandList[2], indents+1)
-                print "\t" * indents + "EndIf"
-            else:
-                print "\t" * indents + repr(i)
+    # def prettyPrint(self, inst, indents=0):
+    #     for i in inst:
+    #         if isinstance(i, x86If):
+    #             print "\t" * indents + "If: " + repr(i.operandList[0])
+    #             self.prettyPrint(i.operandList[1], indents+1)
+    #             print "\t" * indents + "Else:"
+    #             self.prettyPrint(i.operandList[2], indents+1)
+    #             print "\t" * indents + "EndIf"
+    #         elif isinstance(i, x86Preamble):
+    #             print "# preamble"
+    #             print i
+    #         elif isinstance(i, x86Label):
+    #             print '\t' * indents + repr(i)
+    #         else:
+    #             print "\t" * (indents + 1) + repr(i)
 
 
 if __name__ == '__main__':

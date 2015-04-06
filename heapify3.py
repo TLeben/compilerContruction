@@ -10,11 +10,11 @@ class HeapifyVisitor(HeapifyVisitor):
 
     def visitGetattr(self, n, args=None):
         (below, expr) = self.dispatch(n.expr)
-        return below, AssAttr(expr, n.attrname)
+        return below, Getattr(expr, n.attrname)
 
     def visitHasAttr(self, n, args=None):
         (below, expr) = self.dispatch(n.expr)
-        return below, AssAttr(expr, n.attrname)
+        return below, HasAttr(expr, n.attrname)
 
     def visitCreateClass(self, n, args=None):
         freeBelows = []
