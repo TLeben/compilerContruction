@@ -397,7 +397,8 @@ class x86Neg(x86OneOpInstruction):
     '''
 
     def __init__(self, reg=None):
-        super(x86Neg, self).__init__("negl", reg)
+        self.name = 'negl'
+        self.op = reg
 
     def prettyPrint(self, fd):
         super(x86Neg, self).prettyPrint(fd)

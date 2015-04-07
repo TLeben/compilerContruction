@@ -99,19 +99,19 @@ class FreeVarVisitor(Visitor):
     def visitIntCompare(self, n, args=None):
         ret = set([])
         ret |= self.dispatch(n.expr)
-        ret |= self.dispatch(n.ops[1])
+        ret |= self.dispatch(n.ops[0][1])
         return ret
 
     def visitBigCompare(self, n, args=None):
         ret = set([])
         ret |= self.dispatch(n.expr)
-        ret |= self.dispatch(n.ops[1])
+        ret |= self.dispatch(n.ops[0][1])
         return ret
 
     def visitIsCompare(self, n, args=None):
         ret = set([])
         ret |= self.dispatch(n.expr)
-        ret |= self.dispatch(n.ops[1])
+        ret |= self.dispatch(n.ops[0][1])
         return ret
 
     def visitIfExp(self, n, args=None):

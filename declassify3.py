@@ -104,8 +104,8 @@ class DeclassifyVisitor(Visitor):
     # p1 Visitor Methods --------------------------------------------------------
 
     def visitCompare(self, n, thisClass=None):
-        return Compare(self.dispatch(n.expr, thisClass),
-                       self.dispatch(n.ops[0][1], thisClass))
+        return Compare(self.dispatch(n.expr, thisClass), [(n.ops[0][0],
+                       self.dispatch(n.ops[0][1], thisClass))])
 
     def visitAnd(self, n, thisClass=None):
         ands = []

@@ -3,7 +3,7 @@
 #@TODO change tiebraker to use a heuristic instead of ramdom
 #@TODO figure out what to do if a partial answer is returned- maybe add a 'spill' value 
 #   to the domain and run again giving the spill val low weight. repeat until we have an optimal answer
-
+from copy import deepcopy
 import Queue
 import random
 #from utils import *
@@ -31,13 +31,20 @@ class Graph(object):
 
     def __init__(self):
         ## @TODO use %eax as a value????
-        self.values = ['%ebx','%ecx','%edx','%esi', '%edi']
+        self.values = ['%ebx','%ecx']#,'%edx','%esi', '%edi']
         self.vars = []     # variables that need registers
         self.neighbors = dict()  # {variable: [neighbors]} *can be empty list
         self.domains = dict()  # {variable: [possible domains]}
         self.final = dict()  # {variable: single domain}
         self.currDomains = None   # {variable: [working list of domains]}
+        self.spilled = []
+        self.assigns = {}
         self.ptr=0
+        self.stkCount = 0
+
+    def getStkCount(self):
+        self.stkCount += 1
+        return self.stkCount
     
     def addNode(self, nodeName):
         '''
@@ -45,7 +52,7 @@ class Graph(object):
         '''
         if nodeName not in self.vars:
             self.neighbors[nodeName] = set([])
-            self.domains[nodeName] = self.values
+            self.domains[nodeName] = deepcopy(self.values)
             self.vars.append(nodeName)
             self.addArc(nodeName)
             return True
@@ -265,6 +272,78 @@ class Graph(object):
         return (self.currDomains or self.domains)[var]
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    def doPass(self):
+
+        colorMap = self.colorGraph()
+
+
+        print colorMap
+        print self.domains
+        # for v in notAssigned:
+        #     # print v
+        #     # print self.spilled.has_key(v)
+        #     if self.spilled.has_key(v):
+        #         pass
+        #     else:
+        #         self.spilled[v] = '-{}'.format(self.getStkCount() * 4)
+        #         break
+        # for k in self.spilled:
+        #     # print spills[k]
+        #     # print self.domains[k]
+        #     self.domains[k] = [self.spilled[k]]
+        #     self.currDomains[k] = [self.spilled[k]]
+        print self.assigns
+        self.spilled = list(set(self.vars) - set([k for k in self.assigns]))
+        i = 0
+        if colorMap == None:
+            for var in self.spilled:
+                self.currDomains[var] = [self.getStkCount()]
+                colorMap = self.colorGraph()
+                print 'domains\n', self.domains
+                print '-'*50, self.currDomains
+                if colorMap != None:
+                    break
+            colorMap = self.colorGraph()
+        return colorMap
+
+
+
+    def pickColors(self, debug=0):
+        self.currDomains = deepcopy(self.domains)
+
+        for n in self.vars:
+            #select and assign
+            if debug:
+                print 'picking for ', n, self.currDomains[n]
+            if not len(self.currDomains[n]):
+                #spill this var
+                if debug:
+                    print 'spilled:', n
+                self.final[n] = '{}'.format(self.getStkCount())
+            else:
+                if debug:
+                    print 'setting {} to {}'.format(n, self.currDomains[n][0])
+                self.final[n] = self.currDomains[n][0]
+
+                # remove domain from neighbors
+                for nb in self.neighbors[n]:
+                    try:
+                        self.currDomains[nb].remove(self.final[n])
+                        if debug:
+                            print 'removing {} from {}'.format(self.final[n], nb)
+                    except(ValueError):
+                        pass
+        if debug:
+            print self.final
+        return self.final
+
+            # print n,  self.domains[n]
+            # print n, self.neighbors[n]
+
+
+
+
+
 
     # ~~~~~~~~~~~~~~~~~~~Here is where the magic happens~~~~~~~~~~~~~~~
     def colorGraph(self,
@@ -283,17 +362,25 @@ class Graph(object):
                 if 0 == self.numConflicts(var, value, assignment):
                     self.assign(var, value, assignment)
                     removals = self.infer(var, value)
+
                     if inference(self, var, value, assignment, removals):
                         result = backtrack(assignment)
                         if result is not None:
                             return result
+
                     self.restore(removals)
+
                 self.unassign(var, assignment)
             # No solution was found
-            return (False, assignment)
+
+            for k in assignment:
+                self.assigns[k] = assignment[k]
+
+            self.unassign(var, assignment)
+            #return  dic
 
             # self.unassign(var, assignment)
-            # return None
+            #return None
                 
 
         result = backtrack({})
@@ -319,6 +406,8 @@ if __name__ == '__main__':
     g.addNode('a')
     g.addArc('a')
     g.addArc('a', 'b')
+    g.addArc('a', 'f')
+    g.addArc('a', set(['f', 'c', 'e']))
     g.addArc('d', set(['a', 'b', 'c']))
     g.addArc('d', set(['b', 'c', 'e', 'f']))
     # g.addArc('b',set(['d','c']))
@@ -326,7 +415,8 @@ if __name__ == '__main__':
     g.addArc('e', set(['d', 'f']))
     g.addArc('f', set(['d', 'e']))
     g.addArc('g')
-    
-    print g.colorGraph()
+
+    # print g.doPass()
+    g.pickColors()
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

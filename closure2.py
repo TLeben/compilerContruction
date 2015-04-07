@@ -1,7 +1,7 @@
 from tourist import *
 from uniquify3 import *
 from pyAST import *
-from freeVars2 import *
+from freeVars3 import *
 
 
 class ClosureVisitor(Visitor):
@@ -141,17 +141,17 @@ class ClosureVisitor(Visitor):
 
     def visitIsCompare(self, n, args=None):
         (bExpr, fExpr) = self.dispatch(n.expr)
-        (bOps, fOps) = self.dispatch(n.ops[1])###
+        (bOps, fOps) = self.dispatch(n.ops[0][1])###
         return IsCompare(bExpr, [(n.ops[0][0], bOps)]), fExpr + fOps
 
     def visitIntCompare(self, n, args=None):
         (bExpr, fExpr) = self.dispatch(n.expr)
-        (bOps, fOps) = self.dispatch(n.ops[1])###
+        (bOps, fOps) = self.dispatch(n.ops[0][1])###
         return IntCompare(bExpr, [(n.ops[0][0], bOps)]), fExpr + fOps
 
     def visitBigCompare(self, n, args=None):
         (bExpr, fExpr) = self.dispatch(n.expr)
-        (bOps, fOps) = self.dispatch(n.ops[1])###
+        (bOps, fOps) = self.dispatch(n.ops[0][1])###
         return BigCompare(bExpr, [(n.ops[0][0], bOps)]), fExpr + fOps
 
     def visitIfExp(self, n, args=None):

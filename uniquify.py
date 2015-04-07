@@ -127,7 +127,7 @@ class UniquifyVisitor(Visitor):
         return n
 
     def visitFunction(self, n, symTable):
-        print symTable
+        # print symTable
         n.name = self.uniquify(symTable, n.name)
         locVars = self.findLocals(n)
         self.uniquifyLocals(locVars, symTable)
@@ -230,6 +230,7 @@ class UniquifyVisitor(Visitor):
         return n
 
     def visitCompare(self, n, symTable):
+
         n.expr = self.dispatch(n.expr, symTable)
         n.ops[0] = (n.ops[0][0], self.dispatch(n.ops[0][1], symTable))
         return n

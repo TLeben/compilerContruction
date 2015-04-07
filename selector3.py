@@ -87,7 +87,7 @@ if __name__ == '__main__':
     from flatten3 import *
     from selector3 import *
     from unstructorFlow import *
-    debug = 1
+    debug = 10
     pyfi = 'x = 2'
     toDeclassify = None
     if len(sys.argv) != 2:

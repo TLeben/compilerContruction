@@ -24,9 +24,9 @@ class ExplicateVisitor(Visitor):
     def compareType(self, lhs, tag):
         return InjectFrom(tagof[BOOL_t], IntCompare(InjectFrom(tagof[INT_t],
                                                                GetTag(lhs)),
-                                                    ['==',
+                                                    [('==',
                                                      InjectFrom(tagof[INT_t],
-                                                                tag)]))
+                                                                tag))]))
 
     def metaCompareType(self, left, right, tagl, tagr):
         return And([self.compareType(left, tagof[tagl]),
@@ -175,6 +175,7 @@ class ExplicateVisitor(Visitor):
                        Let(tmpr, right, InjectFrom(tagof[BOOL_t],
                                                    IsCompare(tmpl, [
                                                        (n.ops[0][0], tmpr)]))))
+
         return Let(tmpl, left,
                    Let(tmpr, right, InjectFrom(tagof[BOOL_t],
                                                self.metaCompare(tmpl, tmpr,
