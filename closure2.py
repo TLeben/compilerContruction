@@ -223,14 +223,14 @@ class ClosureVisitor(Visitor):
         return IntAdd((left, right)), fLefts + fRights
 
 
-    def doPass(self, ast, debug):
+    def doPass(self, ast, debug=0):
         if debug:
             print '-'*20 + self.__class__.__name__ + '-'*20
         (mainTree, functionList) = self.dispatch(ast)
         if debug > 1:
-            print '-'*20 + 'Closed tree' + '-'*20
+            print '~'*20 + 'Closed tree' + '~'*20
             self.toString(mainTree.node)
-            print '-'*20 + 'Global Functions' + '-'*20
+            print '~'*20 + 'Global Functions' + '~'*20
             self.toString(Stmt(functionList))
 
         passed = self.metaMainFunc(functionList, mainTree)

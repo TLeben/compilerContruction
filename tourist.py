@@ -30,15 +30,18 @@ class Visitor(object):
     be used to visit a child node of arbitrary type.
     """
 
-    debug = 0
+    debug = 1
 
     def __init__(self):
         self.node = None
         self._cache = {}
 
     def default(self, n, *args):
-        print n, '``````````````````````````````````````````'
-        raise NotImplementedException(n.__class__.__name__)
+        if self.debug:
+            print 'Error: We hit the default visitor\n', n, '\n', '-'*75
+            raise NotImplementedException(n.__class__.__name__)
+        else:
+            pass
 
     def dispatch(self, node, *args):
         self.node = node
@@ -73,11 +76,11 @@ class Visitor(object):
         return passed
 
     def toString(self, stmts, tab=0):
-        if stmts.nodes:
-            sList = stmts.nodes
-        else:
-            sList = stmts.node.nodes
-        for n in sList:
+        # if stmts.nodes:
+        #     sList = stmts.nodes
+        # else:
+        #     sList = stmts.node.nodes
+        for n in stmts:
             if isinstance(n, If):
                 print '\t' * tab + 'If: ' + str(n.tests[0][0]) + ' then:'
                 self.toString(n.tests[0][1], tab+1)
