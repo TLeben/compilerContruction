@@ -24,7 +24,7 @@ class ClosureVisitor(Visitor):
         return "closure" + str(self.tmpVar)
 
     def metaMainFunc(self, funcList, mainTree):
-        return funcList + [Function(None, Name('_main'), [], None, 0, None,
+        return funcList + [Function(None, Name('main'), [], None, 0, None,
                             Stmt(mainTree.node.nodes + [Return(Const(0))]))]
 
     # Visitor Methods-----------------------------------------------------------

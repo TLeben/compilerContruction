@@ -7,6 +7,7 @@ from copy import deepcopy
 import Queue
 import random
 #from utils import *
+from x86AST import *
 
 
 class Graph(object):
@@ -31,7 +32,7 @@ class Graph(object):
 
     def __init__(self):
         ## @TODO use %eax as a value????
-        self.values = ['%ebx','%ecx']#,'%edx','%esi', '%edi']
+        self.values = ['ebx', 'ecx', 'edx', 'esi', 'esi']
         self.vars = []     # variables that need registers
         self.neighbors = dict()  # {variable: [neighbors]} *can be empty list
         self.domains = dict()  # {variable: [possible domains]}
@@ -50,6 +51,8 @@ class Graph(object):
         '''
         use addArc if possible
         '''
+        #if isinstance(nodeName, x86Var):
+
         if nodeName not in self.vars:
             self.neighbors[nodeName] = set([])
             self.domains[nodeName] = deepcopy(self.values)
@@ -62,10 +65,28 @@ class Graph(object):
         '''
         u is a start node and v a set/list of vertices or a single vertex
         '''
+        #print '+='*50
+        #print u.__class__.__name__, u, v.__class__.__name__,v
+        if isinstance(u, x86Var) or isinstance(u, Name):
+            u = repr(u)
+        if isinstance(v,x86Var) or isinstance(u, Name):
+            v = repr(v)
+        if isinstance(v, x86Register):
+            v = None
+        if isinstance(u,x86Register):
+            u = None
+        #print u.__class__.__name__, v.__class__.__name__
         if v is None:
             v = u
+            #print 'v is none', u,v
         if u not in self.vars:
-            self.addNode(u)
+            if u:
+                #print 'added:', u
+                self.addNode(u)
+            else:
+                u = v
+        if None == u:
+            return
         if isinstance(v, list):  # v is a list []
             v = set(v)
         if isinstance(v, set):  # v is a set([])
@@ -277,41 +298,27 @@ class Graph(object):
         colorMap = self.colorGraph()
 
 
-        print colorMap
-        print self.domains
-        # for v in notAssigned:
-        #     # print v
-        #     # print self.spilled.has_key(v)
-        #     if self.spilled.has_key(v):
-        #         pass
-        #     else:
-        #         self.spilled[v] = '-{}'.format(self.getStkCount() * 4)
-        #         break
-        # for k in self.spilled:
-        #     # print spills[k]
-        #     # print self.domains[k]
-        #     self.domains[k] = [self.spilled[k]]
-        #     self.currDomains[k] = [self.spilled[k]]
-        print self.assigns
+        #print self.neighbors
         self.spilled = list(set(self.vars) - set([k for k in self.assigns]))
         i = 0
         if colorMap == None:
             for var in self.spilled:
-                self.currDomains[var] = [self.getStkCount()]
+                self.currDomains[var] += [self.getStkCount()]
                 colorMap = self.colorGraph()
-                print 'domains\n', self.domains
-                print '-'*50, self.currDomains
+                #print 'domains\n', self.domains
+                #print '-'*50, self.currDomains
                 if colorMap != None:
                     break
             colorMap = self.colorGraph()
+            symTable = deepcopy(colorMap)
         return colorMap
 
 
 
     def pickColors(self, debug=0):
         self.currDomains = deepcopy(self.domains)
-
-        for n in self.vars:
+        #print self.neighbors
+        for n in self.currDomains:
             #select and assign
             if debug:
                 print 'picking for ', n, self.currDomains[n]
@@ -335,6 +342,7 @@ class Graph(object):
                         pass
         if debug:
             print self.final
+
         return self.final
 
             # print n,  self.domains[n]

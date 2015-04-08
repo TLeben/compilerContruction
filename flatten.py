@@ -27,7 +27,7 @@ class FlatVisitor(Visitor):
         return self.getCurrTemp()
 
     def getCurrTemp(self):
-        tmp = "__flt" + str(self._tmpCounter)
+        tmp = x86Var("__flt" + str(self._tmpCounter))
         return tmp
 
     # FlatVisitor Methods-----------------------------

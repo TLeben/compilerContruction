@@ -1,3 +1,4 @@
+import cStringIO
 from pyAST import *
 from tourist import Visitor
 from x86AST import *
@@ -11,8 +12,9 @@ class x86Selector(Visitor):
 
     _tmpCounter = 0
     _strCount = 0
+    _stkCount = 0
     symTable = {}
-    todo = 1
+    todo = 0
     instList = []
     dataSection = ""
 
@@ -37,7 +39,8 @@ class x86Selector(Visitor):
 
     def getNextTemp(self):
         self._tmpCounter+=1
-        return self.getCurrTemp()
+
+        return self.updateSymTable(self.getCurrTemp())
 
     def getCurrTemp(self):
         tmp = "__t" + str(self._tmpCounter)
@@ -73,6 +76,7 @@ class x86Selector(Visitor):
         return inst
 
     def prettyPrint(self, inst, indents=0):
+        asm = cStringIO.StringIO()
         for i in inst:
             if isinstance(i, x86If):
                 print "\t" * indents + "If: " + repr(i.operandList[0])
@@ -87,6 +91,44 @@ class x86Selector(Visitor):
                 print '\t' * indents + repr(i)
             else:
                 print "\t" * (indents + 1) + repr(i)
+
+
+    def assignVar(self, newval):
+        if newval.isdigit():
+            if newval > self._stkCount:
+                self._stkCount = newval
+            return x86StkLoc(int(newval)*4)
+        else:
+            return x86Register(newval)
+
+    def replaceVars(self, env, inst):
+        stkCt = 0
+        #print env
+        for i in inst:
+            if isinstance(i, x86OneOpInstruction):
+                if isinstance(i.name, x86Var):
+                    i.name = self.assignVar(env[repr(i.name)])
+                if isinstance(i.op, x86Var):
+                    i.op = self.assignVar(env[repr(i.op)])
+
+            elif isinstance(i, x86TwoOpInstruction):
+                if isinstance(i.lhs, x86Var):
+                    i.lhs = self.assignVar(env[repr(i.lhs)])
+                if isinstance(i.rhs, x86Var):
+                    i.rhs = self.assignVar(env[repr(i.rhs)])
+                # print i.rhs, i.lhs
+            elif isinstance(i,x86ThreeOpInstruction):
+                if isinstance(i.lhs, x86Var):
+                    i.lhs = self.assignVar(env[repr(i.lhs)])
+                if isinstance(i.mhs, x86Var):
+                    i.mhs = self.assignVar(env[repr(i.mhs)])
+                    if isinstance(i.rhs, x86Var):
+                        i.rhs = self.assignVar(env[repr(i.rhs)])
+        return inst
+
+
+
+
 
     # Visitors abstract --------------------------------------------------------
 

@@ -3,7 +3,7 @@ from selector2 import *
 
 class x86Selector(x86Selector):
 
-    def doPass(self, ast,  debug=0):
+    def doPass(self, ast, debug=0):
         ir = []
         if debug:
             print '-'*20 + self.__class__.__name__  + '-' *20
@@ -86,8 +86,9 @@ if __name__ == '__main__':
     from closure3 import *
     from flatten3 import *
     from selector3 import *
+    from RegisterAllocator import *
     from unstructorFlow import *
-    debug = 10
+    debug = 6
     pyfi = 'x = 2'
     toDeclassify = None
     if len(sys.argv) != 2:
@@ -122,7 +123,11 @@ if __name__ == '__main__':
 
     toSelector = FlatVisitor().doPass(toFlatten, debug)
 
-    toRemoveFlow = x86Selector().doPass(toSelector, debug)
+    toRegAlloc = x86Selector().doPass(toSelector, debug)
+
+    toRenameVars, env = RegisterAllocator().allocateRegisters(toRegAlloc, debug)
+
+    toRemoveFlow = x86Selector().replaceVars(env, toRenameVars)
 
     unFlowed = FlowStripper().doPass(toRemoveFlow, debug)
 

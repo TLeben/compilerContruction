@@ -190,7 +190,7 @@ class x86Preamble(Node):
         #self.instructions.append(x86Mov(x86Register('esp'), x86Register('ebp')))
 
     def addInst(self, inst):
-        if isinstance(inst, list) or isinstance(inst, List):
+        if isinstance(inst, list):# or isinstance(inst, List):
             self.instructions += inst
         else:
             self.instructions.append(inst)
@@ -498,6 +498,9 @@ class x86Ret(x86NoOpInstruction):
     def __init__(self):
 
         self.name = 'ret'
+
+    def __repr__(self):
+        return '{}'.format(self.name)
 
     def prettyPrint(self, fd):
         super(x86Ret, self).prettyPrint(fd)

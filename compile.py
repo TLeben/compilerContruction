@@ -1,10 +1,15 @@
 #!/usr/bin/env python
-
-from flatten2 import *
-from explicate2 import *
-from uniquify import *
-from heapify2 import *
+import sys
+import compiler
+from declassify3 import *
+from explicate3 import *
+from uniquify3 import *
+from heapify3 import *
+from closure3 import *
+from flatten3 import *
+from selector3 import *
 from RegisterAllocator import *
+from unstructorFlow import *
 
 import sys
 import compiler
@@ -15,7 +20,7 @@ from subprocess import call
 # sys.path.append('hw2/ply-3.4')
 # from parse import Parser
 
-DEBUG = 0
+debug = 0
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -41,54 +46,41 @@ if __name__ == "__main__":
     # create the x86 assembly
     #
     try:
-        tree = compiler.parseFile(inFile)
+        toDeclassify = compiler.parseFile(inFile)
 
         # Homework 2
         # tree = Parser().parse(inFile)
 
+
+
     except IOError as e:
         print 'Unable to open %s: %s' % (inFile, e)
     else:
-        # walk the Abstract Syntax Tree
-        visitor = ASTourist(outFile, debug=DEBUG)
-        compiler.walk(tree, visitor, walker=ASTVisitor())
-        visitor.breadth()
+        #toDeclassify = compiler.parseFile(inFile)
 
-        # x86 instruction selection
-        # visitor.toInterCode()
-        uq = UniquifyVisitor()
-        ex = ExplicateVisitor()
-        hp = HeapifyVisitor()
-        fl = FlatVisitor()
-        #cl = ClosureVisitor()
-        #si = SelectorVisitor()
-        #al = RegisterAllocator(visitor, debug=DEBUG)
+        toUnique = DeclassifyVisitor().doPass(toDeclassify, debug)
 
+        toExplicate = UniquifyVisitor().doPass(toUnique, debug)
 
-        tree = uq.preorder(tree, uq, {})   # uniquify
-        tree = ex.preorder(tree, ex)       # explicate
-        tree = hp.preorder(tree, hp)       # heapify
-        # tree = cl.preorder(tree, cl)     # create Closure
-        tree = fl.preorder(tree, fl, True) # flatten
-        # tree = si.preorder(tree,fl)      # select x86 instructions
-        # al.allocateRegisters()           # register Allocation
-        # Remove ifs                       # remove structured ifs
-        # Print x86 to file                # print to file
+        toHeapify = ExplicateVisitor().doPass(toExplicate, debug)
+
+        toClosure = HeapifyVisitor().doPass(toHeapify, debug)
+
+        toFlatten = ClosureVisitor().doPass(toClosure, debug)
+
+        toSelector = FlatVisitor().doPass(toFlatten, debug)
+
+        toRegAlloc = x86Selector().doPass(toSelector, debug)
+
+        toRenameVars, env = RegisterAllocator().allocateRegisters(toRegAlloc,
+                                                                  debug)
+        toRemoveFlow = x86Selector().replaceVars(env, toRenameVars)
+
+        unFlowed = FlowStripper().doPass(toRemoveFlow, debug)
 
 
-        if DEBUG >= 1:
-            print "------------------------------------------"
-            visitor.renderAssembly(stdout=True)
-            print "------------------------------------------"
+        sys.stdout = open(outFile, 'w')
+        x86Selector().prettyPrint(unFlowed, 0)
+        sys.stdout.close()
 
-        # register allocation
-        allocator.allocateRegisters()
-
-        # generate final x86 assembly
-        if DEBUG >= 1:
-            print "------------------------------------------"
-            visitor.renderAssembly(stdout=True)
-            print "------------------------------------------"
-        else:
-            visitor.renderAssembly(stdout=False)
 
