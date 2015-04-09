@@ -23,14 +23,15 @@ from subprocess import call
 debug = 0
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print 'Usage: %s <pythonFile.py>' % (sys.argv[0])
         raise SystemExit(1)
 
     if sys.argv[1][-3:] != '.py':
         print 'Error: file is not a python file.'
         raise SystemExit(1)
-
+    if len(sys.argv) == 3:
+        debug = int (sys.argv[2])
     inFile = sys.argv[1]
     outFile = inFile[:-3] + ".s"
 
@@ -72,15 +73,21 @@ if __name__ == "__main__":
 
         toRegAlloc = x86Selector().doPass(toSelector, debug)
 
-        toRenameVars, env = RegisterAllocator().allocateRegisters(toRegAlloc,
+        toRemoveFlow, env = RegisterAllocator().allocateRegisters(toRegAlloc,
                                                                   debug)
-        toRemoveFlow = x86Selector().replaceVars(env, toRenameVars)
 
-        unFlowed = FlowStripper().doPass(toRemoveFlow, debug)
+        # x86Code = x86Selector().replaceVars(env, toRemoveFlow)
+        x86Code = FlowStripper().doPass(toRemoveFlow, debug)
+        x86Code = x86Selector().replaceVars(env, x86Code)
+        #x86Code = x86Selector().replaceVars(env, toRenameVars)
 
 
+        stdout = sys.stdout
         sys.stdout = open(outFile, 'w')
-        x86Selector().prettyPrint(unFlowed, 0)
+        x86Selector().prettyPrint(x86Code, 0)
         sys.stdout.close()
+        sys.stdout = stdout
+
+
 
 

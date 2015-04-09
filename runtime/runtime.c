@@ -5,7 +5,10 @@
 #include <string.h>
 
 #include "runtime.h"
-
+void type_error(void){
+    printf("Oops, we have a type error!!");
+    assert(0);
+}
 int min(int x, int y) { return y < x ? y : x; }
 
 /* Some forward declarations */

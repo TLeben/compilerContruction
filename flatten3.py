@@ -34,6 +34,11 @@ class FlatVisitor(FlatVisitor):
 
     def visitIf(self, n, args=None):
         (test, tList) = self.dispatch(n.tests[0][0])
+        print 'visiting if in flatten3'
+        if isinstance(test, List):
+            print test
+        else:
+            print 'not a List'
         then = self.dispatch(n.tests[0][1])
         else_ = self.dispatch(n.else_)
         return tList + [If([(test, then)], else_)]

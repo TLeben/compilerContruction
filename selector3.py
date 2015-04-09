@@ -68,8 +68,14 @@ class x86Selector(x86Selector):
         tstVar = self.getCurrTemp()
         thn = self.dispatch(n.tests[0][1])
         els = self.dispatch(n.else_)
-
-        inst.append(x86If([test, x86Push(tstVar), x86Call('is_true'),
+        # print 'visiting iff in selector3'
+        # print test
+        # print'then', '='*50
+        # print thn
+        # print'else','='*50
+        # print els
+        tst =test+ [x86Push(tstVar), x86Call('is_true'), x86Add(x86Const(4), x86Register('esp')),x86Cmp(x86Const(1), x86Register('eax'))]
+        inst.append(x86If(test + [x86Push(tstVar), x86Call('is_true'),
                 x86Add(x86Const(4), x86Register('esp')),
                 x86Cmp(x86Const(1), x86Register('eax'))],
                           thn, els))
@@ -88,7 +94,7 @@ if __name__ == '__main__':
     from selector3 import *
     from RegisterAllocator import *
     from unstructorFlow import *
-    debug = 6
+    debug = 10
     pyfi = 'x = 2'
     toDeclassify = None
     if len(sys.argv) != 2:
@@ -111,25 +117,26 @@ if __name__ == '__main__':
         except:
             pass
 
-    toUnique = DeclassifyVisitor().doPass(toDeclassify, debug)
+    toUnique = DeclassifyVisitor().doPass(toDeclassify, debug=0)
 
-    toExplicate = UniquifyVisitor().doPass(toUnique, debug)
+    toExplicate = UniquifyVisitor().doPass(toUnique, debug=0)
 
-    toHeapify = ExplicateVisitor().doPass(toExplicate, debug)
+    toHeapify = ExplicateVisitor().doPass(toExplicate, debug=0)
 
-    toClosure = HeapifyVisitor().doPass(toHeapify, debug)
+    toClosure = HeapifyVisitor().doPass(toHeapify, debug=0)
 
-    toFlatten = ClosureVisitor().doPass(toClosure, debug)
+    toFlatten = ClosureVisitor().doPass(toClosure, debug=0)
 
-    toSelector = FlatVisitor().doPass(toFlatten, debug)
+    toSelector = FlatVisitor().doPass(toFlatten, debug=0)
 
-    toRegAlloc = x86Selector().doPass(toSelector, debug)
+    toRegAlloc = x86Selector().doPass(toSelector, debug=0)
 
-    toRenameVars, env = RegisterAllocator().allocateRegisters(toRegAlloc, debug)
+    toRenameVars, env = RegisterAllocator().allocateRegisters(toRegAlloc, debug=0)
 
     toRemoveFlow = x86Selector().replaceVars(env, toRenameVars)
 
-    unFlowed = FlowStripper().doPass(toRemoveFlow, debug)
+
+    unFlowed = FlowStripper().doPass(toRemoveFlow, debug=0)
 
 
 

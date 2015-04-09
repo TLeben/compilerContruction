@@ -21,15 +21,15 @@ class FlowStripper:
         labelElse = self.getLabel('else')
         labelEnd = self.getLabel('endif')
         self._labelCount += 1
-        #for xx in ifx86.lhs:
-        inst += self.doPass(ifx86.mhs)
+        for xx in ifx86.lhs:
+            inst += self.doPass([xx])
         inst.append(x86Jne(labelElse))
-        #for xx in ifx86.mhs:
-        inst += self.doPass(ifx86.mhs)
+        for xx in ifx86.mhs:
+            inst += self.doPass([xx])
         inst.append(x86Jmp(labelEnd))
         inst.append(x86Label(labelElse))
-        #for xx in ifx86.rhs:
-        inst += self.doPass(ifx86.rhs)
+        for xx in ifx86.rhs:
+            inst += self.doPass([xx])
         inst.append(x86Label(labelEnd))
         return inst
 

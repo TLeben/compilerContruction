@@ -34,13 +34,14 @@ class x86Selector(Visitor):
             if val:
                 self.symTable[var] = val
             else:
-                self.symTable[var] = x86Var(var)
+                self.symTable[var] = var
+
         return self.symTable.get(var)
 
     def getNextTemp(self):
         self._tmpCounter+=1
 
-        return self.updateSymTable(self.getCurrTemp())
+        return self.getCurrTemp()
 
     def getCurrTemp(self):
         tmp = "__t" + str(self._tmpCounter)
@@ -87,6 +88,7 @@ class x86Selector(Visitor):
             elif isinstance(i, x86Preamble):
                 print "# preamble"
                 self.prettyPrint(i.instructions)
+                print '# preamble'
             elif isinstance(i, x86Label):
                 print '\t' * indents + repr(i)
             else:
@@ -104,27 +106,55 @@ class x86Selector(Visitor):
     def replaceVars(self, env, inst):
         stkCt = 0
         #print env
+        newInst = []
+        #for x in env:
+            #print x, env[x]
         for i in inst:
-            if isinstance(i, x86OneOpInstruction):
-                if isinstance(i.name, x86Var):
-                    i.name = self.assignVar(env[repr(i.name)])
-                if isinstance(i.op, x86Var):
-                    i.op = self.assignVar(env[repr(i.op)])
+            #print i
+            if isinstance(i, x86If):
+                for xx in i.operandList:
+                    for zz in xx:
+                        self.replaceVars(env, zz)
 
+            if isinstance(i, x86OneOpInstruction):
+                #print 'oneOp'
+
+                if isinstance(i.name, x86Var):
+                    if repr(i.name) in env:
+                        i.name = self.assignVar(env[repr(i.name)])
+                if isinstance(i.op, x86Var):
+                    if repr(i.op) in env:
+                        i.op = self.assignVar(env[repr(i.op)])
+                newInst.append(i)
             elif isinstance(i, x86TwoOpInstruction):
+               # print 'TwoOp ', i.rhs, i.rhs.__class__.__name__
                 if isinstance(i.lhs, x86Var):
-                    i.lhs = self.assignVar(env[repr(i.lhs)])
+                    if repr(i.lhs) in env:
+                        i.lhs = self.assignVar(env[repr(i.lhs)])
                 if isinstance(i.rhs, x86Var):
-                    i.rhs = self.assignVar(env[repr(i.rhs)])
-                # print i.rhs, i.lhs
-            elif isinstance(i,x86ThreeOpInstruction):
-                if isinstance(i.lhs, x86Var):
-                    i.lhs = self.assignVar(env[repr(i.lhs)])
-                if isinstance(i.mhs, x86Var):
-                    i.mhs = self.assignVar(env[repr(i.mhs)])
-                    if isinstance(i.rhs, x86Var):
+                    if repr(i.rhs) in env:
                         i.rhs = self.assignVar(env[repr(i.rhs)])
-        return inst
+                newInst.append(i)
+            elif isinstance(i, x86ThreeOpInstruction):
+                #print 'ThreeOp'
+                #print '@'*50, i.name, i.lhs, i.lhs.__class__.__name__, i.rhs, i.rhs.__class__.__name__
+                if isinstance(i.lhs, x86Var):
+                    if repr(i.lhs) in env:
+                        i.lhs = self.assignVar(env[repr(i.lhs)])
+                if isinstance(i.mhs, x86Var):
+                    if repr(i.mhs) in env:
+                        i.mhs = self.assignVar(env[repr(i.mhs)])
+                if isinstance(i.rhs, x86Var):
+                    if repr(i.lhs) in env:
+                        i.rhs = self.assignVar(env[repr(i.rhs)])
+
+                # for id in i.mhs:
+                #     print id.__class__.__name__, '&*'
+                newInst.append(i)
+            else:
+                newInst.append(i)
+            #print '--'*50
+        return newInst
 
 
 
@@ -157,9 +187,12 @@ class x86Selector(Visitor):
 
         if isinstance(n.nodes[0], AssName): # assign to variable
             inst += self.dispatch(n.expr)
-            inst.append(x86Mov(self.getCurrTemp(),
-                               self.updateSymTable(n.nodes[0].name)))
-
+            # inst.append(x86Mov(self.getCurrTemp(),
+            #                    self.updateSymTable(n.nodes[0].name)))
+            if isinstance(n.nodes[0].name, Name):
+                print '&6'*50, n.nodes[0].name
+                sys.exit(1)
+            inst.append(x86Mov(self.getCurrTemp(), n.nodes[0].name))
         elif isinstance(n.nodes[0], Subscript): # assign subscript
             inst += self.dispatch(n.expr)
             tmp = self.getCurrTemp()
@@ -217,6 +250,7 @@ class x86Selector(Visitor):
         elif n.name == TRUE:
             return [x86Mov(x86Const(TRUEVAL), self.getNextTemp())]
         else:
+            #print n.name, '=-0'*50#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2
             return [x86Mov(n.name, self.getNextTemp())]
 
 

@@ -14,11 +14,10 @@ class ExplicateVisitor(Visitor):
 
     def getNextTemp(self):
         self._tmpCounter += 1
-        tmp = "__expTmp" + str(self._tmpCounter)
-        return tmp
+        return self.getCurrTemp()
 
     def getCurrTemp(self):
-        tmp = "__expTmp" + str(self._tmpCounter)
+        tmp = '_exp' + str(self._tmpCounter)
         return tmp
 
     def compareType(self, lhs, tag):

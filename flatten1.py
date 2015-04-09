@@ -6,11 +6,11 @@ class FlatVisitor(FlatVisitor):
     def __init__(self):
          super(FlatVisitor, self).__init__()
 
-    def visitLet(self, node, args=None):
-        (right, sList) = self.dispatch(node.rhs)
-        (body, sbList) = self.dispatch(node.body)
+    def visitLet(self, n, args=None):
+        (right, sList) = self.dispatch(n.rhs)
+        (body, sbList) = self.dispatch(n.body)
         return body, sList + \
-               [Assign([AssName('__' + node.var.name, 'OP_ASSIGN')], right)] + sbList
+               [Assign([AssName(n.var.name, 'OP_ASSIGN')], right)] + sbList
 
     def visitIsCompare(self, n, args=None):
         (expr, sList) = self.dispatch(n.expr)
@@ -83,30 +83,31 @@ class FlatVisitor(FlatVisitor):
     def visitGetTag(self, n, args=None):
         (arg, stmt) = self.dispatch(n.arg)
         tmp = self.getNextTemp()
-        return Name(arg), stmt + \
-               [Assign([AssName(tmp, 'OP_ASSIGN')], GetTag(arg))]
+        # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        return Name(tmp), stmt + [
+            Assign([AssName(tmp, 'OP_ASSIGN')], GetTag(arg))]
 
     def visitProjectTo(self, n, args=None):
         (typ, stmtL)  = self.dispatch(n.typ)
         (arg, stmtR) = self.dispatch(n.arg)
         tmp = self.getNextTemp()
-        return Name(tmp), stmtL + stmtR + \
-               [Assign([AssName(tmp, 'OP_ASSIGN')], ProjectTo(typ, arg))]
+        return Name(tmp), stmtL + stmtR + [
+            Assign([AssName(tmp, 'OP_ASSIGN')], ProjectTo(typ, arg))]
 
     def visitInjectFrom(self, n, args=None):
         (typ, stmtL) = self.dispatch(n.typ)
         (arg, stmtR) = self.dispatch(n.arg)
         tmp = self.getNextTemp()
-        return Name(tmp), stmtL + stmtR +\
-               [Assign([AssName(tmp, 'OP_ASSIGN')], InjectFrom(typ, arg))]
+        return Name(tmp), stmtL + stmtR +[
+            Assign([AssName(tmp, 'OP_ASSIGN')], InjectFrom(typ, arg))]
 
     # Lists and Dicts ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def visitSubscript(self, n, args=None):
         (expr, exprList) = self.dispatch(n.expr)
         (subs, subsList) = self.dispatch(n.subs[0])
         tmp = self.getNextTemp()
-        return Name(tmp), exprList + subsList + \
-               [Assign([AssName(tmp, 'OP_ASSIGN')],
+        return Name(tmp), exprList + subsList + [
+            Assign([AssName(tmp, 'OP_ASSIGN')],
                        Subscript(expr, 'OP_APPLY', [subs]))]
 
     def visitList(self, n, args=None):

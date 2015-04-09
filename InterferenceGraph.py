@@ -6,7 +6,7 @@
 from copy import deepcopy
 import Queue
 import random
-#from utils import *
+from pyAST import *
 from x86AST import *
 
 
@@ -65,16 +65,26 @@ class Graph(object):
         '''
         u is a start node and v a set/list of vertices or a single vertex
         '''
-        #print '+='*50
-        #print u.__class__.__name__, u, v.__class__.__name__,v
-        if isinstance(u, x86Var) or isinstance(u, Name):
+        # if isinstance(u, str):
+        #      u = x86Var(u)
+        # if isinstance(v, str):
+        #      v = x86Var(v)
+        #print 'InterferenceGraph addArc','+'*50
+
+        #print u, u.__class__.__name__, '\n',v, v.__class__.__name__
+
+        if isinstance(u, x86Var):
             u = repr(u)
-        if isinstance(v,x86Var) or isinstance(u, Name):
+
+        if isinstance(v,x86Var):
             v = repr(v)
         if isinstance(v, x86Register):
             v = None
+
         if isinstance(u,x86Register):
             u = None
+
+
         #print u.__class__.__name__, v.__class__.__name__
         if v is None:
             v = u

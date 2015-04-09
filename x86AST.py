@@ -362,8 +362,16 @@ class x86Mov(x86TwoOpInstruction):
     '''
 
     def __init__(self, lhs=None, rhs=None):
-        self.lhs = lhs
-        self.rhs = rhs
+
+        if isinstance(lhs, str):
+            self.lhs = x86Var(lhs)
+        else:
+            self.lhs = lhs
+        if isinstance(rhs, str):
+            self.rhs = x86Var(rhs)
+        else:
+            self.rhs = rhs
+
         self.name = 'movl'
 
 
@@ -600,11 +608,13 @@ class x86If(x86ThreeOpInstruction):
         self.rhs = rhs
         self.operandList = [lhs, mhs, rhs]
 
-    def __str__(self):
-        ret = ""
+    def __repr__(self):
+        ret = ''
         for i in range(3):
+            ct = 0
             for inst in self.operandList[i]:
-                ret += "-"*(i+1) + ">" + repr(inst)+"\n"
+                ret += '{}\n'.format(inst)
+
         return ret
 
 
@@ -672,6 +682,8 @@ class x86While(x86TwoOpInstruction):
         self.name = 'loopWhile'
         self.lhs = test
         self.rhs = body
+        self.operandList = [self.lhs, self.rhs]
+
 
     def __repr__(self):
         return 'WHILE:\n\t TEST: {}\n\t BODY: {}'.format(self.lhs, self.rhs)

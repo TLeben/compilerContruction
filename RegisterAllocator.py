@@ -27,6 +27,9 @@ class RegisterAllocator(object):
         self.beforeLiveSet = set([])
         self.interferenceGraph = Graph()
         self.stackPos = 0
+    def allocHelper(self, instr,debug=0):
+        self.computeLiveSet(instr, debug)
+        self.updateGraph(instr, debug)
 
     def allocateRegisters(self, x86IR, debug=0):
         # for each activation record ...
@@ -40,14 +43,14 @@ class RegisterAllocator(object):
             for instr in reversed(instructions):
                 # ignore stack manipulation instructions
 
-                if isinstance(instr, x86Add)and instr.rhs == x86Register('esp'):
+                if (isinstance(instr, x86Add) and instr.rhs == x86Register('esp')) \
+                        or isinstance(instr, x86Leave) \
+                        or isinstance(instr, x86Preamble):
                     continue
-                elif isinstance(instr, x86Leave): continue
 
-                elif isinstance(instr, x86Preamble): continue
-
-                self.computeLiveSet(instr, debug)
-                self.updateGraph(instr, debug)
+                self.allocHelper(instr)
+                # self.computeLiveSet(instr, debug)
+                # self.updateGraph(instr, debug)
 
             # now color the graph
             graph = self.interferenceGraph.pickColors(debug)
@@ -111,10 +114,18 @@ class RegisterAllocator(object):
             self.__addToSet(readSet, instr.lhs, debug)
             self.__addToSet(readSet, instr.rhs, debug)
             self.__addToSet(writeSet, instr.rhs, debug)
+        elif isinstance(instr, x86Cmp):
+            self.__addToSet(readSet, instr.lhs, debug)
+            self.__addToSet(writeSet, instr.rhs, debug)
         elif isinstance(instr, x86Mov):
             self.__addToSet(readSet, instr.lhs, debug)
             self.__addToSet(writeSet, instr.rhs, debug)
-
+        elif isinstance(instr, x86If) or isinstance(instr, x86While):
+            # for i in reversed(range(3)):
+            ct = 0
+            for op in reversed(instr.operandList):
+                for ist in reversed(op):
+                    self.allocHelper(ist, debug)
         # compute the live set using algorithm above
         if debug >= 3:
             print "\tread set ->{}<-".format(readSet)
@@ -122,6 +133,7 @@ class RegisterAllocator(object):
 
         self.beforeLiveSet = (self.afterLiveSet - writeSet) | readSet
         self.afterLiveSet = self.beforeLiveSet
+
 
     def updateGraph(self, instr, debug):
         if debug >= 3:
@@ -171,13 +183,15 @@ class RegisterAllocator(object):
         if False == isinstance(value, x86Const):
             if False == isinstance(value, x86Register):
                 if isinstance(value, x86Var):
-                    value = value.name
+                    value = repr(value)
                 aSet.add(value)
 
     def __addToGraph(self, node, debug):
          if False == isinstance(node, x86Register) and False == isinstance(node, x86Const):
             if debug >= 2:
                 print "__addToGraph() node {}".format(node)
+            if isinstance(node, Name):
+                node = x86Var(node.name)
             if isinstance(node, x86Var):
                     node = repr(node)
             self.interferenceGraph.addNode(node)

@@ -27,7 +27,7 @@ class FlatVisitor(Visitor):
         return self.getCurrTemp()
 
     def getCurrTemp(self):
-        tmp = x86Var("__flt" + str(self._tmpCounter))
+        tmp = "__flt" + str(self._tmpCounter)
         return tmp
 
     # FlatVisitor Methods-----------------------------
@@ -68,9 +68,8 @@ class FlatVisitor(Visitor):
                        stmt)]
         else:
             (stmt, stmtList) = self.dispatch(n.expr)
-
             return stmtList + [
-                Assign([AssName('__' + n.nodes[0].name, 'OP_ASSIGN')], stmt)]
+                Assign([AssName(n.nodes[0].name, 'OP_ASSIGN')], stmt)]
 
     def visitDiscard(self, n, args=None):
         # Discard attributes
@@ -94,6 +93,7 @@ class FlatVisitor(Visitor):
         # star_args        the extended *-arg value
         # dstar_args       the extended **-arg value
         tmp = self.getNextTemp()
+
         return Name(tmp), [Assign([AssName(tmp, 'OP_ASSIGN')], n)]
 
     def visitIfExp(self, n, args=None):
@@ -116,8 +116,8 @@ class FlatVisitor(Visitor):
 
         nNode = Add((left, right))
         tmp1 = self.getNextTemp()
-        return Name(tmp1), lsList + rsList + \
-               [Assign([AssName(tmp1, 'OP_ASSIGN')], nNode)]
+        return Name(tmp1), lsList + rsList + [
+            Assign([AssName(tmp1, 'OP_ASSIGN')], nNode)]
 
 
     # unaryOp::= (-) -----------------------
@@ -128,8 +128,8 @@ class FlatVisitor(Visitor):
         # print '(-)'
         (expr, sList) = self.dispatch(n.expr)
         tmp = self.getNextTemp()
-        return Name(tmp), sList + \
-               [Assign([AssName(tmp, 'OP_ASSIGN')], UnarySub(expr))]
+        return Name(tmp), sList + [
+            Assign([AssName(tmp, 'OP_ASSIGN')], UnarySub(expr))]
 
     # leaves/atomics ::= variable(name) | Const(int)----------------------------
 
@@ -150,7 +150,7 @@ class FlatVisitor(Visitor):
         # name
         if n.name == TRUE or n.name == FALSE:
             return Name(n.name), []
-        return Name('__' + n.name), []
+        return Name(n.name), []
 
 if __name__ == '__main__':
     import sys
